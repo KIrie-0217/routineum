@@ -29,7 +29,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('users')
         .select('id')
         .eq('id', userId)
-        .single();
+        .single()
+        .setHeader('Cache-Control', 'no-cache')
+        .setHeader('Pragma', 'no-cache');
       
       // データが見つからないエラー以外のエラーが発生した場合
       if (fetchError && fetchError.code !== 'PGRST116') {
@@ -38,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // ユーザーが存在しない場合は作成を試みる
-      if (!existingUser) {
+      if (existingUser) { console.log('AuthProvider: User record already exists'); } else {
         console.log('AuthProvider: User record not found, creating new one');
         
         // RLS ポリシーをバイパスするために管理者権限で操作
@@ -52,9 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Error creating user record via RPC:', insertError);  
         } else {
           console.log('Created new user record via RPC function');
-        } 
-      } else {
-        console.log('AuthProvider: User record already exists');
+        }
       }
     } catch (err) {
       console.error('Error in ensureUserRecord:', err);
