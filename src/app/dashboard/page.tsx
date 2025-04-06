@@ -18,7 +18,6 @@ export default function DashboardPage() {
   const router = useRouter();
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [performanceCount, setPerformanceCount] = useState<number>(0);
   const [techniqueCount, setTechniqueCount] = useState<number>(0);
   const [practiceCount, setPracticeCount] = useState<number>(0);
@@ -76,7 +75,6 @@ export default function DashboardPage() {
               if (insertError) {
                 console.error('Error creating user record:', insertError);
                 setError(`ユーザーレコードの作成に失敗しました: ${insertError.message}`);
-                setDebugInfo({ error: insertError });
               } else {
                 console.log('Dashboard: User record created successfully');
                 toast({
@@ -90,10 +88,8 @@ export default function DashboardPage() {
             } else if (userError) {
               console.error('Error fetching user record:', userError);
               setError(`ユーザー情報の取得に失敗しました: ${userError.message}`);
-              setDebugInfo({ error: userError });
             } else {
               console.log('Dashboard: User record found:', userData);
-              setDebugInfo({ user: userData });
             }
             
             // ユーザー情報の取得に成功したら統計情報を取得
@@ -102,7 +98,6 @@ export default function DashboardPage() {
           } catch (err) {
             console.error('Unexpected error checking user record:', err);
             setError('ユーザー情報の確認中に予期しないエラーが発生しました。');
-            setDebugInfo({ error: String(err) });
           } finally {
             console.log('Dashboard: Setting loading state to false');
             clearTimeout(timeoutId); // 念のためタイムアウトをクリア
@@ -247,7 +242,6 @@ export default function DashboardPage() {
           isClosable: true,
         });
         setError(`再試行に失敗しました: ${insertError.message}`);
-        setDebugInfo({ error: insertError });
       } else {
         toast({
           title: '成功',
@@ -266,7 +260,6 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error retrying user creation:', err);
       setError('再試行中にエラーが発生しました。');
-      setDebugInfo({ error: String(err) });
     } finally {
       setIsPageLoading(false);
     }
@@ -434,33 +427,7 @@ export default function DashboardPage() {
         </Box>
         
         <Divider my={6} />
-        
-        {debugInfo && (
-          <Alert status={debugInfo.error ? "warning" : "info"} mb={6}>
-            <AlertIcon />
-            <Box flex="1">
-              <AlertTitle>{debugInfo.error ? "デバッグ情報 (エラー)" : "デバッグ情報"}</AlertTitle>
-              <AlertDescription>
-                <Text>{debugInfo.message || debugInfo.error || 'デバッグ情報を取得しました'}</Text>
-                {debugInfo.user && (
-                  <Text mt={2}>ユーザーID: {debugInfo.user.id}</Text>
-                )}
-                {debugInfo.details && (
-                  <Box mt={2}>
-                    <Text fontWeight="bold">詳細:</Text>
-                    <Code p={2} mt={1} fontSize="sm" whiteSpace="pre-wrap">
-                      {JSON.stringify(debugInfo.details, null, 2)}
-                    </Code>
-                  </Box>
-                )}
-              </AlertDescription>
-            </Box>
-            <CloseButton onClick={() => setDebugInfo(null)} />
-          </Alert>
-        )}
-        
-
-        
+          
         {/* ダッシュボードサマリーチャートを追加 */}
         {user && !statsLoading && (performanceCount > 0 || techniqueCount > 0 || practiceCount > 0) && (
           <Box mb={8}>
