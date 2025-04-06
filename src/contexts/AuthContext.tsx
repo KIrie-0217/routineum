@@ -26,8 +26,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log(`AuthProvider: Ensuring user record for ${userId}`);
  
       // まずユーザーが存在するか確認
-      const maxRetries = 3;
-      const timeout = 1000; // 1 seconds
+      const maxRetries = 5;
+      const timeout = 500; // 0.5 seconds
       let retryCount = 0;
       let existingUser;
       let fetchError;
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
-       
+
       // データが見つからないエラー以外のエラーが発生した場合
       if (fetchError && fetchError.code !== 'PGRST116') {
         console.error('Error checking user existence:', fetchError);
