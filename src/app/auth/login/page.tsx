@@ -100,8 +100,8 @@ export default function LoginPage() {
             Routineum
           </Heading>
           <Text fontSize={{ base: 'sm', md: 'md' }} px={2}>
-            ジャグリングのルーチン練習記録を管理するアプリケーション
-          </Text>
+            大会に向けてジャグリングのルーチン練習記録を管理するアプリケーション
+          </Text> 
           <Box 
             p={boxPadding} 
             borderWidth={1} 
