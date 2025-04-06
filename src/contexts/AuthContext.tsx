@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: existingUser, error: fetchError } = await fetchWithRetry(supabaseQuery,
         {
           maxRetries: 5,
-          timeoutMs: 500,
+          timeoutMs: 1000,
           exponentialBackoff: true,
           onRetry: (attempt, error) => {
             console.log(`Retry attempt ${attempt} checking user existence:`, error);
