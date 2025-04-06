@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Routineum
 
-## Getting Started
+ルーティンの記録と分析のためのウェブアプリケーション。日々の習慣を追跡し、パフォーマンスを視覚化することで継続的な改善をサポートします。
 
-First, run the development server:
+## 技術スタック
+
+- **フロントエンド**: [Next.js 15](https://nextjs.org/) (React 19)
+- **UI**: [Chakra UI](https://chakra-ui.com/)
+- **認証/データベース**: [Supabase](https://supabase.com/)
+- **フォーム管理**: React Hook Form + Zod
+- **データ可視化**: Chart.js, React Calendar Heatmap
+- **スタイリング**: Emotion
+- **言語**: TypeScript
+
+## 機能
+
+- ユーザー認証（ログイン/サインアップ）
+- ルーティン記録と管理
+- パフォーマンス分析とデータ可視化
+- レスポンシブデザイン
+
+## 開発環境のセットアップ
+
+1. リポジトリをクローン:
+
+```bash
+git clone <repository-url>
+cd routineum
+```
+
+2. 依存関係のインストール:
+
+```bash
+npm install
+```
+
+3. 環境変数の設定:
+   `.env.local.example` をコピーして `.env.local` を作成し、必要な環境変数を設定します。
+
+4. 開発サーバーの起動:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. ブラウザで [http://localhost:3000](http://localhost:3000) を開いてアプリケーションを確認できます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## プロジェクト構造
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+routineum/
+├── src/
+│   ├── app/             # Next.js App Router
+│   ├── components/      # 再利用可能なコンポーネント
+│   ├── contexts/        # React コンテキスト
+│   ├── hooks/           # カスタムフック
+│   ├── lib/             # ユーティリティライブラリ
+│   ├── services/        # API サービス
+│   ├── types/           # TypeScript 型定義
+│   └── utils/           # ヘルパー関数
+├── supabase/            # Supabase 関連ファイル
+└── public/              # 静的アセット
+```
 
-## Learn More
+## デプロイ
 
-To learn more about Next.js, take a look at the following resources:
+このアプリケーションは [Vercel](https://vercel.com) にデプロイすることを推奨します。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ライセンス
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
