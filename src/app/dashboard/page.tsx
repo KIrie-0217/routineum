@@ -35,81 +35,33 @@ export default function DashboardPage() {
     // 認証状態のロード完了時に処理
     if (!isLoading) {
       if (user) {
-        console.log('Dashboard: User authenticated, checking user record');
-        setIsPageLoading(true); // ここでローディング状態を有効化
+        console.log('Dashboard: User authenticated, loading dashboard stats');
+        setIsPageLoading(true); // ローディング状態を有効化
         
         // タイムアウト処理を追加
         const timeoutId = setTimeout(() => {
           console.log('Dashboard: API request timeout, forcing loading state to false');
           setIsPageLoading(false);
-          setError('ユーザー情報の取得がタイムアウトしました。再読み込みしてください。');
+          setError('データの取得がタイムアウトしました。再読み込みしてください。');
         }, 5000); // 5秒後にタイムアウト
         
-        // ユーザーレコードが存在するか確認
-        const checkUserRecord = async () => {
-          try {
-            console.log('Dashboard: Checking user record directly with Supabase client');
-            
-            // ユーザー情報を取得
-            const { data: userData, error: userError } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', user.id)
-              .single();
-              
+        // AuthContextがユーザーレコードの存在を確認/作成するため、
+        // ここではダッシュボードの統計情報を直接取得する
+        loadDashboardStats(user.id)
+          .then(() => {
             clearTimeout(timeoutId); // タイムアウトをクリア
-            
-            if (userError && userError.code === 'PGRST116') {
-              console.log('Dashboard: User record not found, creating new one');
-              
-              // ユーザーレコードを作成
-              const { error: insertError } = await supabase
-                .from('users')
-                .insert({
-                  id: user.id,
-                  email: user.email || '',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                });
-                
-              if (insertError) {
-                console.error('Error creating user record:', insertError);
-                setError(`ユーザーレコードの作成に失敗しました: ${insertError.message}`);
-              } else {
-                console.log('Dashboard: User record created successfully');
-                toast({
-                  title: 'ユーザー情報を作成しました',
-                  description: 'ユーザープロフィールが正常に作成されました。',
-                  status: 'success',
-                  duration: 5000,
-                  isClosable: true,
-                });
-              }
-            } else if (userError) {
-              console.error('Error fetching user record:', userError);
-              setError(`ユーザー情報の取得に失敗しました: ${userError.message}`);
-            } else {
-              console.log('Dashboard: User record found:', userData);
-            }
-            
-            // ユーザー情報の取得に成功したら統計情報を取得
-            console.log('Dashboard: Fetching user stats');
-            loadDashboardStats(user.id);
-          } catch (err) {
-            console.error('Unexpected error checking user record:', err);
-            setError('ユーザー情報の確認中に予期しないエラーが発生しました。');
-          } finally {
-            console.log('Dashboard: Setting loading state to false');
-            clearTimeout(timeoutId); // 念のためタイムアウトをクリア
             setIsPageLoading(false); // ローディング状態を解除
-          }
-        };
-        
-        checkUserRecord();
+          })
+          .catch((err) => {
+            console.error('Error loading dashboard stats:', err);
+            setError('統計情報の取得中にエラーが発生しました。');
+            clearTimeout(timeoutId); // タイムアウトをクリア
+            setIsPageLoading(false); // ローディング状態を解除
+          });
       } else {
         // ユーザーがログインしていない場合はログインページにリダイレクト
         console.log('Dashboard: No user found, redirecting to login');
-        window.location.href = '/auth/login'; // 直接URLを変更
+        router.push('/auth/login'); // Next.jsのルーターを使用
       }
     }
     
@@ -119,7 +71,7 @@ export default function DashboardPage() {
       setIsPageLoading(false);
       setStatsLoading(false);
     };
-  }, [user, isLoading, toast]);
+  }, [user, isLoading, router]);
   
   // ダッシュボードの統計情報を取得する関数
   const loadDashboardStats = async (userId: string) => {
@@ -127,61 +79,54 @@ export default function DashboardPage() {
       setStatsLoading(true);
       console.log('Dashboard: Loading dashboard stats for user', userId);
       
-      // 各統計情報を順番に取得し、エラーが発生しても他の情報は取得できるようにする
-      try {
-        console.log('Dashboard: Starting to fetch performance count');
-        const performances = await getTotalPerformancesCount(userId);
-        console.log('Dashboard: Performance count fetch completed successfully');
-        setPerformanceCount(performances);
-        console.log('Dashboard: Performance count loaded:', performances);
-      } catch (error) {
-        console.error('Error loading performance count:', error);
-        setPerformanceCount(0);
-      }
+      // 並列でデータを取得して効率化
+      const [
+        performancesPromise,
+        techniquesPromise,
+        practicesPromise,
+        recentPromise,
+        contributionsPromise
+      ] = [
+        getTotalPerformancesCount(userId).catch(err => {
+          console.error('Error loading performance count:', err);
+          return 0;
+        }),
+        getTotalTechniquesCount(userId).catch(err => {
+          console.error('Error loading technique count:', err);
+          return 0;
+        }),
+        getTotalPracticeSessionsCount(userId).catch(err => {
+          console.error('Error loading practice count:', err);
+          return 0;
+        }),
+        getRecentPerformances(userId, 3).catch(err => {
+          console.error('Error loading recent performances:', err);
+          return [];
+        }),
+        getUserPracticeContributions(userId).catch(err => {
+          console.error('Error loading contribution data:', err);
+          return { techniquePractices: [], performancePractices: [] };
+        })
+      ];
       
-      try {
-        console.log('Dashboard: Starting to fetch technique count');
-        const techniques = await getTotalTechniquesCount(userId);
-        console.log('Dashboard: Technique count fetch completed successfully');
-        setTechniqueCount(techniques);
-        console.log('Dashboard: Technique count loaded:', techniques);
-      } catch (error) {
-        console.error('Error loading technique count:', error);
-        setTechniqueCount(0);
-      }
+      // 並列で実行したPromiseの結果を待つ
+      const [performances, techniques, practices, recent, contributions] = 
+        await Promise.all([
+          performancesPromise, 
+          techniquesPromise, 
+          practicesPromise, 
+          recentPromise, 
+          contributionsPromise
+        ]);
       
-      try {
-        console.log('Dashboard: Starting to fetch practice count');
-        const practices = await getTotalPracticeSessionsCount(userId);
-        console.log('Dashboard: Practice count fetch completed successfully');
-        setPracticeCount(practices);
-        console.log('Dashboard: Practice count loaded:', practices);
-      } catch (error) {
-        console.error('Error loading practice count:', error);
-        setPracticeCount(0);
-      }
+      // 状態を更新
+      setPerformanceCount(performances);
+      setTechniqueCount(techniques);
+      setPracticeCount(practices);
+      setRecentPerformances(recent);
+      setContributionData(contributions);
       
-      try {
-        console.log('Dashboard: Starting to fetch recent performances');
-        const recent = await getRecentPerformances(userId, 3);
-        console.log('Dashboard: Recent performances fetch completed successfully');
-        setRecentPerformances(recent);
-        console.log('Dashboard: Recent performances loaded:', recent.length);
-      } catch (error) {
-        console.error('Error loading recent performances:', error);
-        setRecentPerformances([]);
-      }
-      
-      try {
-        console.log('Dashboard: Starting to fetch contribution data');
-        const contributions = await getUserPracticeContributions(userId);
-        console.log('Dashboard: Contribution data fetch completed successfully');
-        setContributionData(contributions);
-        console.log('Dashboard: Contribution data loaded');
-      } catch (error) {
-        console.error('Error loading contribution data:', error);
-        setContributionData({ techniquePractices: [], performancePractices: [] });
-      }
+      console.log('Dashboard: All stats loaded successfully');
       
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
@@ -223,42 +168,20 @@ export default function DashboardPage() {
     try {
       setIsPageLoading(true);
       
-      // 直接Supabaseクライアントを使用してユーザーレコードを作成
-      const { error: insertError } = await supabase
-        .from('users')
-        .upsert({
-          id: user?.id || '',
-          email: user?.email || '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
-      
-      if (insertError) {
-        toast({
-          title: '失敗',
-          description: `ユーザー情報の作成に失敗しました: ${insertError.message}`,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-        setError(`再試行に失敗しました: ${insertError.message}`);
-      } else {
+      // 統計情報を再取得
+      if (user) {
+        await loadDashboardStats(user.id);
+        setError(null);
         toast({
           title: '成功',
-          description: 'ユーザー情報の作成に成功しました。',
+          description: 'データの再取得に成功しました。',
           status: 'success',
-          duration: 5000,
+          duration: 3000,
           isClosable: true,
         });
-        setError(null);
-        
-        // 再試行が成功したら統計情報も再取得
-        if (user) {
-          loadDashboardStats(user.id);
-        }
       }
     } catch (err) {
-      console.error('Error retrying user creation:', err);
+      console.error('Error retrying data fetch:', err);
       setError('再試行中にエラーが発生しました。');
     } finally {
       setIsPageLoading(false);
@@ -268,10 +191,8 @@ export default function DashboardPage() {
   // ユーザーが認証済みでもローディング中でもない場合は、コンテンツを表示
   if (!user && !isLoading) {
     console.log('Dashboard: No user and not loading, redirecting to login');
-    // 直接リダイレクト
-    if (typeof window !== 'undefined') {
-      window.location.href = '/auth/login';
-    }
+    // Next.jsのルーターを使用してリダイレクト
+    router.push('/auth/login');
     return null;
   }
 
@@ -310,7 +231,7 @@ export default function DashboardPage() {
               <AlertDescription>{error}</AlertDescription>
             </Box>
             <Button colorScheme="red" size="sm" onClick={handleRetryUserCreation} mr={2}>
-              再試行
+              再読み込み
             </Button>
             <CloseButton onClick={handleDismissError} />
           </Alert>
