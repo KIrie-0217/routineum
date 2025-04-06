@@ -63,7 +63,8 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<string>('all'); // 'all', 'month', 'week'
-  const [useAverages, setUseAverages] = useState<boolean>(true); // 日毎の平均値を使用するかどうか
+  const [useAverages, setUseAverages] = useState<boolean>(true); // 日毎の平均値を使用するかどうか 
+  const supabase = getSupabaseClient();
 
   const textColor = useColorModeValue('rgba(0, 0, 0, 0.8)', 'rgba(255, 255, 255, 0.8)');
   const gridColor = useColorModeValue('rgba(0, 0, 0, 0.1)', 'rgba(255, 255, 255, 0.1)');
@@ -73,7 +74,6 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
       try {
         setIsLoading(true);
         setError(null);
-        const supabase = getSupabaseClient();
 
         // ルーチンに含まれる全てのシークエンスを取得
         const { data: techniques, error: techniquesError } = await supabase
@@ -92,7 +92,6 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
         // 各シークエンスの練習データを取得
         const techniquesWithPracticesData = await Promise.all(
           techniques.map(async (technique) => {
-            const supabase = getSupabaseClient();
             const { data: practices, error: practicesError } = await supabase
               .from('technique_practices')
               .select('id, technique_id, practice_date, success_rate')

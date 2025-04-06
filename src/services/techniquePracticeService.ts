@@ -12,11 +12,12 @@ export type TechniquePractice = {
 
 export type NewTechniquePractice = Omit<TechniquePractice, "id" | "created_at">;
 
+const supabase = getSupabaseClient();
+
 // 特定のシークエンスの練習記録を取得
 export async function getTechniquePractices(
   techniqueId: string
 ): Promise<TechniquePractice[]> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("technique_practices")
     .select("*")
@@ -35,7 +36,6 @@ export async function getTechniquePractices(
 export async function createTechniquePractice(
   practice: NewTechniquePractice
 ): Promise<TechniquePractice> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("technique_practices")
     .insert(practice)
@@ -52,7 +52,6 @@ export async function createTechniquePractice(
 
 // 練習記録を削除
 export async function deleteTechniquePractice(id: string): Promise<void> {
-  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from("technique_practices")
     .delete()
@@ -68,7 +67,6 @@ export async function deleteTechniquePractice(id: string): Promise<void> {
 export async function getLatestSuccessRate(
   techniqueId: string
 ): Promise<number | null> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("technique_practices")
     .select("success_rate")
@@ -94,7 +92,6 @@ export async function getSuccessRateHistory(
   techniqueId: string,
   limit: number = 10
 ): Promise<TechniquePractice[]> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("technique_practices")
     .select("practice_date, success_rate")
@@ -115,7 +112,6 @@ export async function getAverageSuccessRate(
   techniqueId: string,
   count: number = 10
 ): Promise<number | null> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("technique_practices")
     .select("success_rate")

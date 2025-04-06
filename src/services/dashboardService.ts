@@ -1,10 +1,11 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { number, string } from "zod";
 
+const supabase = getSupabaseClient();
+
 export async function getUserId(userId: string): Promise<string> {
   try {
     console.log(`Fetching user ID for user ${userId}`);
-    const supabase = getSupabaseClient();
 
     // タイムアウト付きでクエリを実行
     const result = await supabase
@@ -34,7 +35,6 @@ export async function getTotalPerformancesCount(
 ): Promise<number> {
   try {
     console.log(`Fetching performance count for user ${userId}`);
-    const supabase = getSupabaseClient();
 
     const result = await supabase
       .from("performances")
@@ -61,7 +61,6 @@ export async function getTotalPerformancesCount(
 export async function getTotalTechniquesCount(userId: string): Promise<number> {
   try {
     console.log(`Fetching practice session count for user ${userId}`);
-    const supabase = getSupabaseClient();
 
     // ユーザーに関連するルーチンIDを取得
     const perfResult = await supabase
@@ -148,7 +147,6 @@ export async function getTotalPracticeSessionsCount(
 ): Promise<number> {
   try {
     console.log(`Fetching practice session count for user ${userId}`);
-    const supabase = getSupabaseClient();
 
     // ユーザーに関連するルーチンIDを取得（タイムアウト付き）
     const perfResult = await supabase
@@ -215,7 +213,6 @@ export async function getRecentPerformances(
     console.log(
       `Fetching recent performances for user ${userId} with limit ${limit}`
     );
-    const supabase = getSupabaseClient();
 
     const result = await supabase
       .from("performances")

@@ -6,11 +6,12 @@ type PerformancePractice =
 type TechniquePractice =
   Database["public"]["Tables"]["technique_practices"]["Insert"];
 
+const supabase = getSupabaseClient();
+
 // ルーチン練習記録の作成
 export async function createPerformancePractice(
   practice: Omit<PerformancePractice, "id" | "created_at" | "practice_date">
 ) {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("performance_practices")
     .insert({
@@ -31,7 +32,6 @@ export async function createPerformancePractice(
 export async function createTechniquePractice(
   practice: Omit<TechniquePractice, "id" | "created_at" | "practice_date">
 ) {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("technique_practices")
     .insert({
@@ -54,7 +54,6 @@ export async function getPerformancePractices(
   page = 1,
   pageSize = 10
 ) {
-  const supabase = getSupabaseClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -82,7 +81,6 @@ export async function getTechniquePractices(
   page = 1,
   pageSize = 5
 ) {
-  const supabase = getSupabaseClient();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -106,7 +104,6 @@ export async function getTechniquePractices(
 
 // ルーチンの全練習記録を取得（グラフ用）
 export async function getAllPerformancePractices(performanceId: string) {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("performance_practices")
     .select("id, success_rate, practice_date")
@@ -122,7 +119,6 @@ export async function getAllPerformancePractices(performanceId: string) {
 
 // シークエンスの全練習記録を取得（グラフ用）
 export async function getAllTechniquePractices(techniqueId: string) {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("technique_practices")
     .select("id, success_rate, practice_date")
@@ -138,7 +134,6 @@ export async function getAllTechniquePractices(techniqueId: string) {
 
 // ルーチン練習記録の削除
 export async function deletePerformancePractice(practiceId: string) {
-  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from("performance_practices")
     .delete()
@@ -153,7 +148,6 @@ export async function deletePerformancePractice(practiceId: string) {
 
 // シークエンス練習記録の削除
 export async function deleteTechniquePractice(practiceId: string) {
-  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from("technique_practices")
     .delete()

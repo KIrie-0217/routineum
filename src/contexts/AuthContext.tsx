@@ -18,18 +18,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = getSupabaseClient();
 
   // ユーザーレコードを作成または確認する関数
   const ensureUserRecord = async (userId: string, email: string) => {
     try {
       console.log(`AuthProvider: Ensuring user record for ${userId}`);
-
-      const supabase = getSupabaseClient()
-      
+ 
       // まずユーザーが存在するか確認
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
-        .select('id')
+        .select()
         .eq('id', userId);
       
       // データが見つからないエラー以外のエラーが発生した場合
@@ -62,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth context');
-    const supabase = getSupabaseClient();
     
     const fetchSession = async () => {
       try {
@@ -134,7 +132,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const supabase = getSupabaseClient();
     try {
       console.log('AuthProvider: Initiating Google sign in');
       const { error } = await supabase.auth.signInWithOAuth({
@@ -155,7 +152,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const supabase = getSupabaseClient();
     try {
       console.log('AuthProvider: Signing out');
       const { error } = await supabase.auth.signOut();

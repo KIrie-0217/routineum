@@ -41,6 +41,8 @@ interface DashboardSummaryChartProps {
 export default function DashboardSummaryChart({
   userId
 }: DashboardSummaryChartProps) {
+  
+  const supabase = getSupabaseClient();
   const [practiceCountData, setPracticeCountData] = useState<ChartData<'bar'>>({
     labels: [],
     datasets: []
@@ -164,7 +166,6 @@ export default function DashboardSummaryChart({
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const supabase = getSupabaseClient();
 
         setIsLoading(true);
         setError(null);
@@ -276,7 +277,6 @@ export default function DashboardSummaryChart({
 
   // 過去7日間の練習回数を日付ごとに取得する関数
   async function fetchPracticeCountsByDay(performanceIds: string[], startDate: string, dateLabels: string[]) {
-    const supabase = getSupabaseClient();
 
     // ルーチン練習記録を取得
     const { data: perfPractices, error: perfPracticeError } = await supabase
@@ -339,7 +339,6 @@ export default function DashboardSummaryChart({
 
   // 過去7日間の平均成功率を日付ごとに取得する関数
   async function fetchSuccessRatesByDay(performanceIds: string[], startDate: string, dateLabels: string[]) {
-    const supabase = getSupabaseClient();
 
     // ルーチン練習記録を取得
     const { data: perfPractices, error: perfPracticeError } = await supabase

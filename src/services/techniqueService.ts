@@ -5,11 +5,12 @@ import {
   UpdateTechnique,
 } from "@/types/models/technique";
 
+const supabase = getSupabaseClient();
+
 // 特定のルーチンに関連するシークエンスの一覧を取得
 export async function getTechniquesByPerformanceId(
   performanceId: string
 ): Promise<Technique[]> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("techniques")
     .select("*")
@@ -26,7 +27,6 @@ export async function getTechniquesByPerformanceId(
 
 // 特定のシークエンスを取得
 export async function getTechniqueById(id: string): Promise<Technique> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("techniques")
     .select("*")
@@ -45,7 +45,6 @@ export async function getTechniqueById(id: string): Promise<Technique> {
 export async function createTechnique(
   technique: NewTechnique
 ): Promise<Technique> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("techniques")
     .insert(technique)
@@ -65,7 +64,6 @@ export async function updateTechnique(
   id: string,
   updates: UpdateTechnique
 ): Promise<Technique> {
-  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("techniques")
     .update(updates)
@@ -83,7 +81,6 @@ export async function updateTechnique(
 
 // シークエンスを削除
 export async function deleteTechnique(id: string): Promise<void> {
-  const supabase = getSupabaseClient();
   const { error } = await supabase.from("techniques").delete().eq("id", id);
 
   if (error) {
