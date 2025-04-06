@@ -18,7 +18,6 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [redirectAttempts, setRedirectAttempts] = useState(0);
 
   // レスポンシブ対応のためのブレークポイント設定
   const headingSize = useBreakpointValue({ base: 'lg', md: 'xl' });
@@ -30,30 +29,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user && !isLoading) {
-      console.log('Login page: User authenticated, redirecting to dashboard');
-      
-      // 直接URLを変更してリダイレクト
-      if (typeof window !== 'undefined') {
-        console.log('Login page: Using window.location.href for redirect');
-        window.location.href = '/dashboard';
-      } else {
-        console.log('Login page: Using router.push for redirect');
-        router.push('/dashboard');
-      }
-      
-      // 念のため、リダイレクトが失敗した場合のバックアップ
-      const redirectTimeout = setTimeout(() => {
-        console.log('Login page: Redirect timeout, trying again');
-        setRedirectAttempts(prev => prev + 1);
-        
-        if (redirectAttempts < 3) {
-          window.location.href = '/dashboard';
-        }
-      }, 2000);
-      
-      return () => clearTimeout(redirectTimeout);
+      console.log('Login page: User authenticated, redirecting to dashboard'); 
+      router.push('/dashboard'); 
     }
-  }, [user, isLoading, router, redirectAttempts]);
+  }, [user, isLoading, router]);
 
   const handleManualRedirect = () => {
     console.log('Login page: Manual redirect triggered');

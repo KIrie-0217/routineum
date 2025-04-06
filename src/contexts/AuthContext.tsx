@@ -138,6 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          // クライアントサイドでのコールバック処理を指定
+          skipBrowserRedirect: false
         },
       });
       
