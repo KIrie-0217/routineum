@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log('AuthProvider: Initializing auth context');
+    const supabase = getSupabaseClient();
     
     const fetchSession = async () => {
       try {
@@ -157,6 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    const supabase = getSupabaseClient();
     try {
       console.log('AuthProvider: Signing out');
       const { error } = await supabase.auth.signOut();
