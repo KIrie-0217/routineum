@@ -30,10 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('id')
-        .eq('id', userId)
-        .single()
-        .setHeader('Cache-Control', 'no-cache')
-        .setHeader('Pragma', 'no-cache');
+        .eq('id', userId);
       
       // データが見つからないエラー以外のエラーが発生した場合
       if (fetchError && fetchError.code !== 'PGRST116') {
