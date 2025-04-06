@@ -12,6 +12,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
   }
 }
 
+let supabaseClient: SupabaseClient<Database> | null = null;
+
 export const getSupabaseClient = (): SupabaseClient<Database> => {
-  return createClient<Database>(supabaseUrl, supabaseAnonKey, {});
+  if (!supabaseClient) {
+    supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {});
+  }
+
+  return supabaseClient;
 };
