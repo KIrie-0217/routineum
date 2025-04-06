@@ -82,14 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fetchSession = async () => {
       try {
         console.log('AuthProvider: Fetching session');
-        
-        // モバイル環境検出
-        const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-        console.log(`AuthProvider: Running on ${isAndroid ? 'Android' : 'non-Android'} device`);
-        
-        // モバイル環境では長めのタイムアウトを設定
-        const timeoutDuration = isAndroid ? 10000 : 3000;
-        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -99,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         if (session) {
-          console.log('AuthProvider: Session found', session.user.id);
+          console.log('AuthProvider: Session found');
           setSession(session);
           setUser(session.user);
           
@@ -121,13 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     // セッション取得のタイムアウト処理
-    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-    const timeoutDuration = isAndroid ? 10000 : 3000; // モバイルでは10秒に延長
-    
     const timeoutId = setTimeout(() => {
-      console.log(`AuthProvider: Session fetch timeout after ${timeoutDuration}ms, forcing loading state to false`);
+      console.log('AuthProvider: Session fetch timeout, forcing loading state to false');
       setIsLoading(false);
-    }, timeoutDuration);
+    }, 3000); // 3秒後にタイムアウト
 
     fetchSession().finally(() => {
       clearTimeout(timeoutId);
@@ -167,22 +156,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log('AuthProvider: Initiating Google sign in');
-      
-      // ユーザーエージェントを確認してAndroidを検出
-      const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-      console.log(`Running on ${isAndroid ? 'Android' : 'non-Android'} device`);
-      
-      // Android向けの設定を追加
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
-          skipBrowserRedirect: false,
-          queryParams: {
-            // Androidでのリダイレクト問題を軽減するためのパラメータ
-            prompt: 'select_account',
-            access_type: 'offline',
-          }
         },
       });
       
