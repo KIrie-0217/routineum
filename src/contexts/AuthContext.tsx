@@ -1,0 +1,212 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase/client';
+
+type AuthContextType = {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signOut: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ユーザーレコードを作成または確認する関数
+  const ensureUserRecord = async (userId: string, email: string) => {
+    try {
+      console.log(`AuthProvider: Ensuring user record for ${userId}`);
+      
+      // まずユーザーが存在するか確認
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      // データが見つからないエラー以外のエラーが発生した場合
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error checking user existence:', fetchError);
+        return;
+      }
+      
+      // ユーザーが存在しない場合は作成を試みる
+      if (!existingUser) {
+        console.log('AuthProvider: User record not found, creating new one');
+        
+        // RLS ポリシーをバイパスするために管理者権限で操作
+        const { data, error: insertError } = await supabase.rpc('create_user_record', {
+          user_id: userId,
+          user_email: email || '',
+          created_timestamp: new Date().toISOString()
+        });
+        
+        if (insertError) {
+          console.error('Error creating user record via RPC:', insertError);
+          
+          // フォールバック: 直接挿入を試みる
+          const { error: directInsertError } = await supabase
+            .from('users')
+            .insert({
+              id: userId,
+              email: email || '',
+              created_at: new Date().toISOString(),
+            });
+            
+          if (directInsertError) {
+            console.error('Error creating user record directly:', directInsertError);
+          } else {
+            console.log('Created new user record directly in users table');
+          }
+        } else {
+          console.log('Created new user record via RPC function');
+        }
+      } else {
+        console.log('AuthProvider: User record already exists');
+      }
+    } catch (err) {
+      console.error('Error in ensureUserRecord:', err);
+    }
+  };
+
+  useEffect(() => {
+    console.log('AuthProvider: Initializing auth context');
+    
+    const fetchSession = async () => {
+      try {
+        console.log('AuthProvider: Fetching session');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error fetching session:', error);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (session) {
+          console.log('AuthProvider: Session found');
+          setSession(session);
+          setUser(session.user);
+          
+          // ユーザーレコードを確認/作成
+          if (session.user) {
+            await ensureUserRecord(session.user.id, session.user.email || '');
+          }
+        } else {
+          console.log('AuthProvider: No session found');
+          setSession(null);
+          setUser(null);
+        }
+      } catch (err) {
+        console.error('Unexpected error in fetchSession:', err);
+      } finally {
+        console.log('AuthProvider: Session fetch completed');
+        setIsLoading(false);
+      }
+    };
+
+    // セッション取得のタイムアウト処理
+    const timeoutId = setTimeout(() => {
+      console.log('AuthProvider: Session fetch timeout, forcing loading state to false');
+      setIsLoading(false);
+    }, 3000); // 3秒後にタイムアウト
+
+    fetchSession().finally(() => {
+      clearTimeout(timeoutId);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log(`AuthProvider: Auth state changed - event: ${event}`);
+        
+        try {
+          if (session) {
+            console.log('Auth state changed - user:', session.user);
+            setSession(session);
+            setUser(session.user);
+            
+            // ユーザーレコードを確認/作成
+            await ensureUserRecord(session.user.id, session.user.email || '');
+          } else {
+            console.log('Auth state changed - no session');
+            setSession(null);
+            setUser(null);
+          }
+        } catch (err) {
+          console.error('Unexpected error in auth state change:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      console.log('AuthProvider: Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const signInWithGoogle = async () => {
+    try {
+      console.log('AuthProvider: Initiating Google sign in');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      
+      if (error) {
+        console.error('Error signing in with Google:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      console.log('AuthProvider: Signing out');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error signing out:', error);
+        throw error;
+      }
+      
+      console.log('AuthProvider: Sign out successful');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
+  };
+
+  const value = {
+    user,
+    session,
+    isLoading,
+    signInWithGoogle,
+    signOut,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  
+  return context;
+}
