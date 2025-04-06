@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { fetchWithRetry } from '@/utils/supabaseUtils';
 
 type AuthContextType = {
   user: User | null;
@@ -25,8 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log(`AuthProvider: Ensuring user record for ${userId}`);
       
-      // utils/supabaseUtils から汎用関数をインポート
-      const { fetchWithRetry } = await import('@/utils/supabaseUtils');
  
       // まずユーザーが存在するか確認
       const supabaseQuery = supabase
@@ -36,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: existingUser, error: fetchError } = await fetchWithRetry(supabaseQuery,
         {
           maxRetries: 5,
-          timeoutMs: 1000,
+          timeoutMs: 3000,
           exponentialBackoff: true,
           onRetry: (attempt, error) => {
             console.log(`Retry attempt ${attempt} checking user existence:`, error);
