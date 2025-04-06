@@ -212,7 +212,6 @@ export async function getRecentPerformances(
       `Fetching recent performances for user ${userId} with limit ${limit}`
     );
 
-    // タイムアウト付きでクエリを実行
     const result = await supabase
       .from("performances")
       .select("*")

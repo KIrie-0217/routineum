@@ -79,45 +79,26 @@ export default function DashboardPage() {
       setStatsLoading(true);
       console.log('Dashboard: Loading dashboard stats for user', userId);
       
-      // 並列でデータを取得して効率化
-      const [
-        performancesPromise,
-        techniquesPromise,
-        practicesPromise,
-        recentPromise,
-        contributionsPromise
-      ] = [
-        getTotalPerformancesCount(userId).catch(err => {
+      const performances = await getTotalPerformancesCount(userId).catch(err => {
           console.error('Error loading performance count:', err);
           return 0;
-        }),
-        getTotalTechniquesCount(userId).catch(err => {
+        });
+      const techniques = await getTotalTechniquesCount(userId).catch(err => {
           console.error('Error loading technique count:', err);
           return 0;
-        }),
-        getTotalPracticeSessionsCount(userId).catch(err => {
+        });
+      const practices = await getTotalPracticeSessionsCount(userId).catch(err => {
           console.error('Error loading practice count:', err);
           return 0;
-        }),
-        getRecentPerformances(userId, 3).catch(err => {
+        });
+      const recent = await getRecentPerformances(userId, 3).catch(err => {
           console.error('Error loading recent performances:', err);
           return [];
-        }),
-        getUserPracticeContributions(userId).catch(err => {
+        })
+      const contributions = await getUserPracticeContributions(userId).catch(err => {
           console.error('Error loading contribution data:', err);
           return { techniquePractices: [], performancePractices: [] };
-        })
-      ];
-      
-      // 並列で実行したPromiseの結果を待つ
-      const [performances, techniques, practices, recent, contributions] = 
-        await Promise.all([
-          performancesPromise, 
-          techniquesPromise, 
-          practicesPromise, 
-          recentPromise, 
-          contributionsPromise
-        ]);
+        }); 
       
       // 状態を更新
       setPerformanceCount(performances);
