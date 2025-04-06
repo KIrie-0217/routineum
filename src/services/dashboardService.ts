@@ -1,4 +1,31 @@
 import { supabase } from "@/lib/supabase/client";
+import { number, string } from "zod";
+
+export async function getUserId(userId: string): Promise<string> {
+  try {
+    console.log(`Fetching user ID for user ${userId}`);
+
+    // タイムアウト付きでクエリを実行
+    const result = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", userId)
+      .single();
+
+    const { data, error } = result;
+
+    if (error) {
+      console.error("Error fetching user ID:", error);
+      throw new Error(`ユーザーIDの取得に失敗しました: ${error.message}`);
+    }
+
+    console.log(`User ID: ${data.id}`);
+    return data.id;
+  } catch (error) {
+    console.error("Exception in getUserId:", error);
+    return "";
+  }
+}
 
 // ルーチンの総数を取得
 export async function getTotalPerformancesCount(
@@ -7,7 +34,6 @@ export async function getTotalPerformancesCount(
   try {
     console.log(`Fetching performance count for user ${userId}`);
 
-    // タイムアウト付きでクエリを実行
     const result = await supabase
       .from("performances")
       .select("*", { count: "exact", head: true })
