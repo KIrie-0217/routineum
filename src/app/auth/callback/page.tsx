@@ -15,43 +15,62 @@ export default function AuthCallbackPage() {
     const handleCallback = async () => {
       try {
         console.log('Auth callback: Processing authentication callback');
-        // URLからcodeパラメータを取得
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const queryParams = new URLSearchParams(window.location.search);
+        console.log('URL:', window.location.href);
+        console.log('Search params:', window.location.search);
+        console.log('Hash:', window.location.hash);
         
-        // ハッシュまたはクエリパラメータからcodeを取得
-        const code = hashParams.get('code') || queryParams.get('code');
+        // Supabaseの自動セッション処理を使用
+        const { data, error: sessionError } = await supabase.auth.getSession();
         
-        if (code) {
-          console.log('Auth callback: Code found, exchanging for session');
-          // コードをセッションに交換
-          const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (sessionError) {
-            console.error('Error exchanging code for session:', sessionError);
-            setError('認証処理中にエラーが発生しました。もう一度お試しください。');
-            setIsProcessing(false);
-            return;
-          }
-          
-          console.log('Auth callback: Successfully exchanged code for session');
-          
-          // セッションが確立されたことを確認
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (session) {
-            console.log('Auth callback: Session established, redirecting to dashboard');
-            // 直接URLを変更してリダイレクト（Next.jsのルーターよりも確実）
-            window.location.href = '/dashboard';
-          } else {
-            console.error('Auth callback: Session not established after exchange');
-            setError('セッションの確立に失敗しました。もう一度お試しください。');
-            setIsProcessing(false);
-          }
-        } else {
-          console.error('Auth callback: No code provided');
-          setError('認証コードが見つかりません。もう一度ログインしてください。');
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          setError('認証処理中にエラーが発生しました。もう一度お試しください。');
           setIsProcessing(false);
+          return;
+        }
+        
+        if (data.session) {
+          console.log('Auth callback: Session found, redirecting to dashboard');
+          window.location.href = '/dashboard';
+        } else {
+          // セッションがない場合は手動でコードを処理
+          console.log('Auth callback: No session found, trying to handle code manually');
+          
+          // URLからcodeパラメータを取得
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const queryParams = new URLSearchParams(window.location.search);
+          
+          // ハッシュまたはクエリパラメータからcodeを取得
+          const code = hashParams.get('code') || queryParams.get('code');
+          
+          if (code) {
+            console.log('Auth callback: Code found, exchanging for session');
+            // コードをセッションに交換
+            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+            
+            if (exchangeError) {
+              console.error('Error exchanging code for session:', exchangeError);
+              setError('認証処理中にエラーが発生しました。もう一度お試しください。');
+              setIsProcessing(false);
+              return;
+            }
+            
+            // セッションが確立されたことを確認
+            const { data: sessionData } = await supabase.auth.getSession();
+            
+            if (sessionData.session) {
+              console.log('Auth callback: Session established, redirecting to dashboard');
+              window.location.href = '/dashboard';
+            } else {
+              console.error('Auth callback: Session not established after exchange');
+              setError('セッションの確立に失敗しました。もう一度お試しください。');
+              setIsProcessing(false);
+            }
+          } else {
+            console.error('Auth callback: No code provided');
+            setError('認証コードが見つかりません。もう一度ログインしてください。');
+            setIsProcessing(false);
+          }
         }
       } catch (error) {
         console.error('Unexpected error in callback:', error);
