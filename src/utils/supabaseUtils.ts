@@ -5,12 +5,12 @@
 /**
  * Supabaseクエリに対してリトライとタイムアウト処理を実装した汎用関数
  * 
- * @param queryFn - 実行するSupabaseクエリ関数
+ * @param queryFn - 実行するSupabaseクエリ関数またはクエリオブジェクト
  * @param options - リトライとタイムアウトのオプション
  * @returns クエリの結果
  */
 export async function executeWithRetry<T>(
-  queryFn: () => Promise<{ data: T | null; error: any }>,
+  queryFn: any,
   options: {
     maxRetries?: number;
     timeoutMs?: number;
@@ -33,7 +33,8 @@ export async function executeWithRetry<T>(
   while (retryCount < maxRetries) {
     try {
       // クエリ実行とタイムアウト処理
-      const fetchPromise = queryFn();
+      // queryFnが関数の場合は実行し、そうでない場合はそのまま使用
+      const fetchPromise = typeof queryFn === 'function' ? queryFn() : queryFn;
       
       const timeoutPromise = new Promise<{ data: null; error: any }>((_, reject) => {
         setTimeout(() => reject(new Error('Request timeout')), timeoutMs);
@@ -80,12 +81,12 @@ export async function executeWithRetry<T>(
 /**
  * Supabaseクエリを実行し、結果が見つからない場合はnullを返す
  * 
- * @param queryFn - 実行するSupabaseクエリ関数
+ * @param query - 実行するSupabaseクエリオブジェクト
  * @param options - リトライとタイムアウトのオプション
  * @returns クエリの結果
  */
 export async function fetchWithRetry<T>(
-  queryFn: () => Promise<{ data: T | null; error: any }>,
+  query: any,
   options: {
     maxRetries?: number;
     timeoutMs?: number;
@@ -94,6 +95,9 @@ export async function fetchWithRetry<T>(
     onRetry?: (attempt: number, error: any) => void;
   } = {}
 ): Promise<{ data: T | null; error: any }> {
+  // クエリオブジェクトを関数にラップ
+  const queryFn = () => query;
+  
   const result = await executeWithRetry(queryFn, options);
   
   // データが見つからないエラー (PGRST116) の場合は、エラーなしでnullデータを返す
