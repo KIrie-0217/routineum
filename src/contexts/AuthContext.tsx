@@ -26,11 +26,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log(`AuthProvider: Ensuring user record for ${userId}`);
  
       // まずユーザーが存在するか確認
-      const { data: existingUser, error: fetchError } = await supabase
-        .from('users')
-        .select()
-        .eq('id', userId);
-      
+      const maxRetries = 3;
+      const timeout = 1000; // 1 seconds
+      let retryCount = 0;
+      let existingUser;
+      let fetchError;
+
+      while (retryCount < maxRetries) {
+        try {
+          const fetchPromise = supabase
+            .from('users')
+            .select()
+            .eq('id', userId);
+
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), timeout);
+          });
+
+          const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+          existingUser = data;
+          fetchError = error;
+          
+          if (!error) break;
+          
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+          }
+        } catch (error) {
+          fetchError = error;
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
+        }
+      }
+       
       // データが見つからないエラー以外のエラーが発生した場合
       if (fetchError && fetchError.code !== 'PGRST116') {
         console.error('Error checking user existence:', fetchError);
@@ -143,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             prompt: 'consent',
           }
         },
+      
       });
       
       if (error) {
