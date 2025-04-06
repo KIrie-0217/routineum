@@ -97,14 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // セッション取得のタイムアウト処理
-    const timeoutId = setTimeout(() => {
-      console.log('AuthProvider: Session fetch timeout, forcing loading state to false');
-      setIsLoading(false);
-    }, 2000); // 3秒後にタイムアウト
-
+  
     fetchSession().finally(() => {
-      clearTimeout(timeoutId);
+      console.log('AuthProvider: Session fetch completed, setting isLoading to false');
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

@@ -38,8 +38,7 @@ export default function DashboardPage() {
         console.log('Dashboard: User authenticated, loading dashboard stats');
         setIsPageLoading(true); // ローディング状態を有効化
          
-        // AuthContextがユーザーレコードの存在を確認/作成するため、
-        // ここではダッシュボードの統計情報を直接取得する
+        // ダッシュボードの統計情報を取得する
         loadDashboardStats(user.id)
           .then(() => {
             setIsPageLoading(false); // ローディング状態を解除
