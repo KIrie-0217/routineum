@@ -37,25 +37,16 @@ export default function DashboardPage() {
       if (user) {
         console.log('Dashboard: User authenticated, loading dashboard stats');
         setIsPageLoading(true); // ローディング状態を有効化
-        
-        // タイムアウト処理を追加
-        const timeoutId = setTimeout(() => {
-          console.log('Dashboard: API request timeout, forcing loading state to false');
-          setIsPageLoading(false);
-          setError('データの取得がタイムアウトしました。再読み込みしてください。');
-        }, 5000); // 5秒後にタイムアウト
-        
+         
         // AuthContextがユーザーレコードの存在を確認/作成するため、
         // ここではダッシュボードの統計情報を直接取得する
         loadDashboardStats(user.id)
           .then(() => {
-            clearTimeout(timeoutId); // タイムアウトをクリア
             setIsPageLoading(false); // ローディング状態を解除
           })
           .catch((err) => {
             console.error('Error loading dashboard stats:', err);
             setError('統計情報の取得中にエラーが発生しました。');
-            clearTimeout(timeoutId); // タイムアウトをクリア
             setIsPageLoading(false); // ローディング状態を解除
           });
       } else {
