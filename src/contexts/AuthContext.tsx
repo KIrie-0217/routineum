@@ -24,52 +24,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const ensureUserRecord = async (userId: string, email: string) => {
     try {
       console.log(`AuthProvider: Ensuring user record for ${userId}`);
+      
+      // utils/supabaseUtils から汎用関数をインポート
+      const { fetchWithRetry } = await import('@/utils/supabaseUtils');
  
       // まずユーザーが存在するか確認
-      const maxRetries = 5;
-      const timeout = 500; // 0.5 seconds
-      let retryCount = 0;
-      let existingUser;
-      let fetchError;
-
-      while (retryCount < maxRetries) {
-        try {
-          const fetchPromise = supabase
-            .from('users')
-            .select()
-            .eq('id', userId);
-
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Request timeout')), timeout);
-          });
-
-          const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
-          existingUser = data;
-          fetchError = error;
-          
-          if (!error) break;
-          
-          retryCount++;
-          if (retryCount < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
-          }
-        } catch (error) {
-          fetchError = error;
-          retryCount++;
-          if (retryCount < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      const supabaseQuery = supabase
+          .from('users')
+          .select()
+          .eq('id', userId)
+      const { data: existingUser, error: fetchError } = await fetchWithRetry(supabaseQuery,
+        {
+          maxRetries: 5,
+          timeoutMs: 500,
+          exponentialBackoff: true,
+          onRetry: (attempt, error) => {
+            console.log(`Retry attempt ${attempt} checking user existence:`, error);
           }
         }
-      }
-
-      // データが見つからないエラー以外のエラーが発生した場合
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('Error checking user existence:', fetchError);
-        return;
-      }
+      );
       
       // ユーザーが存在しない場合は作成を試みる
-      if (existingUser) { console.log('AuthProvider: User record already exists'); } else {
+      if (existingUser) { 
+        console.log('AuthProvider: User record already exists'); 
+      } else {
         console.log('AuthProvider: User record not found, creating new one');
         
         // RLS ポリシーをバイパスするために管理者権限で操作

@@ -12,6 +12,7 @@ import { Performance } from '@/types/models/performance';
 import { formatDate } from '@/utils/dateUtils';
 import { DashboardSummaryChart, WeeklyAverageGauge } from '@/components/charts';
 import UserContributionHeatmap from '@/components/practice/UserContributionHeatmap';
+import { fetchWithRetry } from '@/utils/supabaseUtils';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
@@ -332,20 +333,43 @@ export default function DashboardPage() {
                   colorScheme="blue"
                   fetchPractices={async () => {
                     // ユーザーの全ルーチンとシークエンスの練習記録を取得
-                    const { data: performances } = await supabase
+                    const supabaseQuery = supabase
                       .from('performances')
                       .select('id')
                       .eq('user_id', user.id);
+                    const { data: performances, error: fetchError } = await fetchWithRetry(supabaseQuery,
+                            {
+                              maxRetries: 3,
+                              timeoutMs: 500,
+                              exponentialBackoff: true,
+                              onRetry: (attempt, error) => {
+                                console.log(`Retry attempt ${attempt} checking performance`, error);
+                              }
+                            }
+                    );
+                                        
                       
                     if (!performances || performances.length === 0) return [];
                     
                     const performanceIds = performances.map(p => p.id);
                     
                     // ルーチン練習記録を取得
-                    const { data: perfPractices } = await supabase
+                    const performancePracticesQuery = supabase
                       .from('performance_practices')
                       .select('success_rate, practice_date')
                       .in('performance_id', performanceIds);
+
+                    const { data: perfPractices, error: _ } = await fetchWithRetry(performancePracticesQuery,
+                        {
+                          maxRetries: 5,
+                          timeoutMs: 500,
+                          exponentialBackoff: true,
+                          onRetry: (attempt, error) => {
+                            console.log(`Retry attempt ${attempt} checking user existence:`, error);
+                          }
+                        }
+                      );
+                
                       
                     return perfPractices || [];
                   }}
