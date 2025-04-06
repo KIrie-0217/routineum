@@ -19,7 +19,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
     const maxPagesToShow = 5; // 表示するページ番号の最大数
     
     let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
     
     // 表示するページ数が最大数に満たない場合、startPageを調整
     if (endPage - startPage + 1 < maxPagesToShow) {
