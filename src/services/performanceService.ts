@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import {
   Performance,
   NewPerformance,
@@ -7,6 +7,7 @@ import {
 
 // 特定のユーザーのルーチン一覧を取得
 export async function getPerformances(userId: string): Promise<Performance[]> {
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("performances")
     .select("*")
@@ -23,6 +24,7 @@ export async function getPerformances(userId: string): Promise<Performance[]> {
 
 // 特定のルーチンを取得
 export async function getPerformance(id: string): Promise<Performance> {
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("performances")
     .select("*")
@@ -56,6 +58,7 @@ export async function createPerformance(
   };
 
   console.log("Creating performance with data:", processedData);
+  const supabase = getSupabaseClient();
 
   // まず、ユーザーが存在するか確認
   const { data: userData, error: userError } = await supabase
@@ -125,6 +128,7 @@ export async function updatePerformance(
         ? null
         : Number(updates.ranking),
   };
+  const supabase = getSupabaseClient();
 
   const { data, error } = await supabase
     .from("performances")
@@ -143,6 +147,7 @@ export async function updatePerformance(
 
 // ルーチンを削除
 export async function deletePerformance(id: string): Promise<void> {
+  const supabase = getSupabaseClient();
   const { error } = await supabase.from("performances").delete().eq("id", id);
 
   if (error) {
@@ -155,6 +160,7 @@ export async function deletePerformance(id: string): Promise<void> {
 export async function getCompletedPerformancesCount(
   userId: string
 ): Promise<number> {
+  const supabase = getSupabaseClient();
   const { count, error } = await supabase
     .from("performances")
     .select("*", { count: "exact", head: true })
@@ -175,6 +181,7 @@ export async function getCompletedPerformancesCount(
 export async function getUpcomingPerformancesCount(
   userId: string
 ): Promise<number> {
+  const supabase = getSupabaseClient();
   const { count, error } = await supabase
     .from("performances")
     .select("*", { count: "exact", head: true })

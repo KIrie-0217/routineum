@@ -14,7 +14,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Box, Heading, Text, Spinner, Center, useColorModeValue, Select, Switch, FormControl, FormLabel, HStack } from '@chakra-ui/react';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
@@ -73,6 +73,7 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
       try {
         setIsLoading(true);
         setError(null);
+        const supabase = getSupabaseClient();
 
         // ルーチンに含まれる全てのシークエンスを取得
         const { data: techniques, error: techniquesError } = await supabase
@@ -91,6 +92,7 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
         // 各シークエンスの練習データを取得
         const techniquesWithPracticesData = await Promise.all(
           techniques.map(async (technique) => {
+            const supabase = getSupabaseClient();
             const { data: practices, error: practicesError } = await supabase
               .from('technique_practices')
               .select('id, technique_id, practice_date, success_rate')

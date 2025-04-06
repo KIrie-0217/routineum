@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase/client';
 
 type AuthContextType = {
   user: User | null;
@@ -23,6 +23,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const ensureUserRecord = async (userId: string, email: string) => {
     try {
       console.log(`AuthProvider: Ensuring user record for ${userId}`);
+
+      const supabase = getSupabaseClient()
       
       // まずユーザーが存在するか確認
       const { data: existingUser, error: fetchError } = await supabase
@@ -134,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    const supabase = getSupabaseClient();
     try {
       console.log('AuthProvider: Initiating Google sign in');
       const { error } = await supabase.auth.signInWithOAuth({

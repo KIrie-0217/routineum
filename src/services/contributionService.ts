@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import { subDays } from "date-fns";
 
 // ユーザーの全ての練習記録を取得する関数
@@ -11,6 +11,8 @@ export async function getUserPracticeContributions(userId: string, days = 365) {
         performancePractices: [],
       };
     }
+
+    const supabase = getSupabaseClient();
 
     const startDate = subDays(new Date(), days).toISOString();
 
@@ -109,6 +111,7 @@ export async function getPerformanceContributions(
   performanceId: string,
   days = 365
 ) {
+  const supabase = getSupabaseClient();
   const startDate = subDays(new Date(), days).toISOString();
 
   // ルーチンに関連するシークエンスのIDを取得
@@ -158,6 +161,7 @@ export async function getAllUserPerformanceContributions(
   userId: string,
   days = 365
 ) {
+  const supabase = getSupabaseClient();
   const startDate = subDays(new Date(), days).toISOString();
 
   // ユーザーの全てのルーチンIDを取得

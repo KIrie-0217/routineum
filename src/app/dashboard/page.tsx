@@ -5,7 +5,7 @@ import { Box, Heading, Text, VStack, SimpleGrid, Stat, StatNumber, StatHelpText,
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import { getTotalPerformancesCount, getTotalTechniquesCount, getTotalPracticeSessionsCount, getRecentPerformances } from '@/services/dashboardService';
 import { getUserPracticeContributions } from '@/services/contributionService';
 import { Performance } from '@/types/models/performance';
@@ -28,6 +28,7 @@ export default function DashboardPage() {
     performancePractices: []
   });
   const toast = useToast();
+  const supabase = getSupabaseClient();
   
   useEffect(() => {
     console.log('Dashboard: useEffect triggered, isLoading:', isLoading, 'user:', !!user);

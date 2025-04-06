@@ -19,7 +19,7 @@ import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { useState, useEffect } from 'react';
 import { format, parseISO, subDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase/client';
 
 // Chart.jsの必要なコンポーネントを登録
 ChartJS.register(
@@ -164,6 +164,8 @@ export default function DashboardSummaryChart({
   useEffect(() => {
     async function fetchDashboardData() {
       try {
+        const supabase = getSupabaseClient();
+
         setIsLoading(true);
         setError(null);
         
@@ -274,6 +276,8 @@ export default function DashboardSummaryChart({
 
   // 過去7日間の練習回数を日付ごとに取得する関数
   async function fetchPracticeCountsByDay(performanceIds: string[], startDate: string, dateLabels: string[]) {
+    const supabase = getSupabaseClient();
+
     // ルーチン練習記録を取得
     const { data: perfPractices, error: perfPracticeError } = await supabase
       .from('performance_practices')
@@ -335,6 +339,8 @@ export default function DashboardSummaryChart({
 
   // 過去7日間の平均成功率を日付ごとに取得する関数
   async function fetchSuccessRatesByDay(performanceIds: string[], startDate: string, dateLabels: string[]) {
+    const supabase = getSupabaseClient();
+
     // ルーチン練習記録を取得
     const { data: perfPractices, error: perfPracticeError } = await supabase
       .from('performance_practices')
