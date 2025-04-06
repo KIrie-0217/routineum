@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // まずユーザーが存在するか確認
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
-        .select('*')
+        .select('id')
         .eq('id', userId)
         .single();
       
@@ -49,25 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         if (insertError) {
-          console.error('Error creating user record via RPC:', insertError);
-          
-          // フォールバック: 直接挿入を試みる
-          const { error: directInsertError } = await supabase
-            .from('users')
-            .insert({
-              id: userId,
-              email: email || '',
-              created_at: new Date().toISOString(),
-            });
-            
-          if (directInsertError) {
-            console.error('Error creating user record directly:', directInsertError);
-          } else {
-            console.log('Created new user record directly in users table');
-          }
+          console.error('Error creating user record via RPC:', insertError);  
         } else {
           console.log('Created new user record via RPC function');
-        }
+        } 
       } else {
         console.log('AuthProvider: User record already exists');
       }
@@ -116,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timeoutId = setTimeout(() => {
       console.log('AuthProvider: Session fetch timeout, forcing loading state to false');
       setIsLoading(false);
-    }, 3000); // 3秒後にタイムアウト
+    }, 2000); // 3秒後にタイムアウト
 
     fetchSession().finally(() => {
       clearTimeout(timeoutId);
@@ -125,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log(`AuthProvider: Auth state changed - event: ${event}`);
-        
+ 
         try {
           if (session) {
             console.log('Auth state changed - user:', session.user);
