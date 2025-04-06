@@ -12,28 +12,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   }
 }
 
-// シングルトンパターンでSupabaseクライアントを管理
-let supabaseInstance: SupabaseClient<Database> | null = null;
-
 export const getSupabaseClient = (): SupabaseClient<Database> => {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storageKey: "routineum-auth-storage",
-      },
-      global: {
-        headers: {
-          "X-Client-Info": "routineum-web-app",
-        },
-      },
-      // モバイルデバイスでのパフォーマンス向上のための設定
-      realtime: {
-        timeout: 30000, // タイムアウトを30秒に設定
-      },
-    });
-  }
-  return supabaseInstance;
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {});
 };
