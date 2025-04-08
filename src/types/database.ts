@@ -6,7 +6,7 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export interface Database {
   public: {
@@ -14,30 +14,27 @@ export interface Database {
       users: {
         Row: {
           id: string;
-          email: string;
           created_at: string;
           updated_at?: string;
         };
         Insert: {
           id?: string;
-          email: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
-          email?: string;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "users_id_fkey"
-            columns: ["id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "users_id_fkey";
+            columns: ["id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           }
-        ]
+        ];
       };
       performances: {
         Row: {
@@ -81,12 +78,12 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "performances_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "performances_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           }
-        ]
+        ];
       };
       techniques: {
         Row: {
@@ -115,12 +112,12 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "techniques_performance_id_fkey"
-            columns: ["performance_id"]
-            referencedRelation: "performances"
-            referencedColumns: ["id"]
+            foreignKeyName: "techniques_performance_id_fkey";
+            columns: ["performance_id"];
+            referencedRelation: "performances";
+            referencedColumns: ["id"];
           }
-        ]
+        ];
       };
       performance_practices: {
         Row: {
@@ -149,12 +146,12 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "performance_practices_performance_id_fkey"
-            columns: ["performance_id"]
-            referencedRelation: "performances"
-            referencedColumns: ["id"]
+            foreignKeyName: "performance_practices_performance_id_fkey";
+            columns: ["performance_id"];
+            referencedRelation: "performances";
+            referencedColumns: ["id"];
           }
-        ]
+        ];
       };
       technique_practices: {
         Row: {
@@ -183,12 +180,12 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "technique_practices_technique_id_fkey"
-            columns: ["technique_id"]
-            referencedRelation: "techniques"
-            referencedColumns: ["id"]
+            foreignKeyName: "technique_practices_technique_id_fkey";
+            columns: ["technique_id"];
+            referencedRelation: "techniques";
+            referencedColumns: ["id"];
           }
-        ]
+        ];
       };
       tricks: {
         Row: {
@@ -226,31 +223,22 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "tricks_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "tricks_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           }
-        ]
+        ];
       };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      create_user_safely: {
+      create_user_record: {
         Args: {
           user_id: string;
-          user_email: string;
-          user_created_at: string;
-        };
-        Returns: Json;
-      };
-      insert_user_directly: {
-        Args: {
-          p_user_id: string;
-          p_email: string;
-          p_created_at: string;
+          created_timestamp: string;
         };
         Returns: Json;
       };
@@ -259,4 +247,4 @@ export interface Database {
       [_ in never]: never;
     };
   };
-};
+}
