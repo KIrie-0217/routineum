@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
-import { Database } from "@/types/database.types";
+import { Database } from "@/types/database";
 
 type PerformancePractice =
   Database["public"]["Tables"]["performance_practices"]["Insert"];

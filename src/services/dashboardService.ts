@@ -1,9 +1,58 @@
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { Database } from "@/types/database";
+import { fetchWithRetry } from "@/utils/supabaseUtils";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { number, string } from "zod";
 
-const supabase = getSupabaseClient();
+export async function fetchPractices(
+  userId: string,
+  supabase: SupabaseClient<Database>
+): Promise<{ success_rate: number; practice_date: string }[]> {
+  const supabaseQuery = supabase
+    .from("performances")
+    .select("id")
+    .eq("user_id", userId);
+  const { data: performances, error: fetchError } = await fetchWithRetry(
+    supabaseQuery,
+    {
+      maxRetries: 3,
+      timeoutMs: 500,
+      exponentialBackoff: true,
+      onRetry: (attempt, error) => {
+        console.log(`Retry attempt ${attempt} checking performance`, error);
+      },
+    }
+  );
 
-export async function getUserId(userId: string): Promise<string> {
+  if (!performances || performances.length === 0) return [];
+
+  const performanceIds = performances.map((p) => p.id);
+
+  // ルーチン練習記録を取得
+  const performancePracticesQuery = supabase
+    .from("performance_practices")
+    .select("success_rate, practice_date")
+    .in("performance_id", performanceIds);
+
+  const { data: perfPractices, error: _ } = await fetchWithRetry(
+    performancePracticesQuery,
+    {
+      maxRetries: 5,
+      timeoutMs: 500,
+      exponentialBackoff: true,
+      onRetry: (attempt, error) => {
+        console.log(`Retry attempt ${attempt} checking user existence:`, error);
+      },
+    }
+  );
+
+  return perfPractices || [];
+}
+
+export async function getUserId(
+  userId: string,
+  supabase: SupabaseClient<Database>
+): Promise<string> {
   try {
     console.log(`Fetching user ID for user ${userId}`);
 
@@ -31,7 +80,8 @@ export async function getUserId(userId: string): Promise<string> {
 
 // ルーチンの総数を取得
 export async function getTotalPerformancesCount(
-  userId: string
+  userId: string,
+  supabase: SupabaseClient<Database>
 ): Promise<number> {
   try {
     console.log(`Fetching performance count for user ${userId}`);
@@ -58,7 +108,10 @@ export async function getTotalPerformancesCount(
 }
 
 // シークエンスの総数を取得
-export async function getTotalTechniquesCount(userId: string): Promise<number> {
+export async function getTotalTechniquesCount(
+  userId: string,
+  supabase: SupabaseClient<Database>
+): Promise<number> {
   try {
     console.log(`Fetching practice session count for user ${userId}`);
 
@@ -143,7 +196,8 @@ export async function getTotalTechniquesCount(userId: string): Promise<number> {
 
 // 練習セッションの総数を取得（ルーチン練習とシークエンス練習の合計）
 export async function getTotalPracticeSessionsCount(
-  userId: string
+  userId: string,
+  supabase: SupabaseClient<Database>
 ): Promise<number> {
   try {
     console.log(`Fetching practice session count for user ${userId}`);
@@ -207,7 +261,8 @@ export async function getTotalPracticeSessionsCount(
 // 最近のルーチンを取得（最大5件）
 export async function getRecentPerformances(
   userId: string,
-  limit: number = 5
+  limit: number = 5,
+  supabase: SupabaseClient<Database>
 ): Promise<any[]> {
   try {
     console.log(
