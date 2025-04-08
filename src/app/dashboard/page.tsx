@@ -5,17 +5,15 @@ import { Box, Heading, Text, VStack, SimpleGrid, Stat, StatNumber, StatHelpText,
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
-import { getSupabaseClient } from '@/lib/supabase/client';
-import { getTotalPerformancesCount, getTotalTechniquesCount, getTotalPracticeSessionsCount, getRecentPerformances } from '@/services/dashboardService';
+import { getTotalPerformancesCount, getTotalTechniquesCount, getTotalPracticeSessionsCount, getRecentPerformances, fetchPractices } from '@/services/dashboardService';
 import { getUserPracticeContributions } from '@/services/contributionService';
 import { Performance } from '@/types/models/performance';
 import { formatDate } from '@/utils/dateUtils';
 import { DashboardSummaryChart, WeeklyAverageGauge } from '@/components/charts';
 import UserContributionHeatmap from '@/components/practice/UserContributionHeatmap';
-import { fetchWithRetry } from '@/utils/supabaseUtils';
 
 export default function DashboardPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading,supabase } = useAuth();
   const router = useRouter();
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +27,6 @@ export default function DashboardPage() {
     performancePractices: []
   });
   const toast = useToast();
-  const supabase = getSupabaseClient();
   
   useEffect(() => {
     console.log('Dashboard: useEffect triggered, isLoading:', isLoading, 'user:', !!user);
@@ -71,19 +68,19 @@ export default function DashboardPage() {
       setStatsLoading(true);
       console.log('Dashboard: Loading dashboard stats for user', userId);
       
-      const performances = await getTotalPerformancesCount(userId).catch(err => {
+      const performances = await getTotalPerformancesCount(userId,supabase).catch(err => {
           console.error('Error loading performance count:', err);
           return 0;
         });
-      const techniques = await getTotalTechniquesCount(userId).catch(err => {
+      const techniques = await getTotalTechniquesCount(userId,supabase).catch(err => {
           console.error('Error loading technique count:', err);
           return 0;
         });
-      const practices = await getTotalPracticeSessionsCount(userId).catch(err => {
+      const practices = await getTotalPracticeSessionsCount(userId,supabase).catch(err => {
           console.error('Error loading practice count:', err);
           return 0;
         });
-      const recent = await getRecentPerformances(userId, 3).catch(err => {
+      const recent = await getRecentPerformances(userId, 3,supabase).catch(err => {
           console.error('Error loading recent performances:', err);
           return [];
         })
@@ -331,48 +328,7 @@ export default function DashboardPage() {
                 <WeeklyAverageGauge 
                   title="週間平均成功率"
                   colorScheme="blue"
-                  fetchPractices={async () => {
-                    // ユーザーの全ルーチンとシークエンスの練習記録を取得
-                    const supabaseQuery = supabase
-                      .from('performances')
-                      .select('id')
-                      .eq('user_id', user.id);
-                    const { data: performances, error: fetchError } = await fetchWithRetry(supabaseQuery,
-                            {
-                              maxRetries: 3,
-                              timeoutMs: 500,
-                              exponentialBackoff: true,
-                              onRetry: (attempt, error) => {
-                                console.log(`Retry attempt ${attempt} checking performance`, error);
-                              }
-                            }
-                    );
-                                        
-                      
-                    if (!performances || performances.length === 0) return [];
-                    
-                    const performanceIds = performances.map(p => p.id);
-                    
-                    // ルーチン練習記録を取得
-                    const performancePracticesQuery = supabase
-                      .from('performance_practices')
-                      .select('success_rate, practice_date')
-                      .in('performance_id', performanceIds);
-
-                    const { data: perfPractices, error: _ } = await fetchWithRetry(performancePracticesQuery,
-                        {
-                          maxRetries: 5,
-                          timeoutMs: 500,
-                          exponentialBackoff: true,
-                          onRetry: (attempt, error) => {
-                            console.log(`Retry attempt ${attempt} checking user existence:`, error);
-                          }
-                        }
-                      );
-                
-                      
-                    return perfPractices || [];
-                  }}
+                  fetchPractices={async () => { return fetchPractices(user.id,supabase)}}
                 />
               </Box>
             </VStack>
