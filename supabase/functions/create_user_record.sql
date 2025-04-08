@@ -1,7 +1,6 @@
 -- ユーザーレコードを作成するためのストアドプロシージャ
 CREATE OR REPLACE FUNCTION create_user_record(
   user_id UUID,
-  user_email TEXT,
   created_timestamp TIMESTAMPTZ
 )
 RETURNS BOOLEAN
@@ -15,8 +14,8 @@ BEGIN
   END IF;
 
   -- ユーザーレコードを挿入
-  INSERT INTO public.users (id, email, created_at)
-  VALUES (user_id, user_email, created_timestamp);
+  INSERT INTO public.users (id, created_at)
+  VALUES (user_id, created_timestamp);
   
   RETURN TRUE;
 EXCEPTION
