@@ -24,7 +24,7 @@ export async function executeWithRetry<T>(
   const {
     maxRetries = 5,
     timeoutMs = 500,
-    retryDelayMs = 1000,
+    retryDelayMs = 500,
     exponentialBackoff = true,
     onRetry = () => {},
   } = options;
