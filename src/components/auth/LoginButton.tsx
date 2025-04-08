@@ -5,11 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FcGoogle } from 'react-icons/fc';
 
 export default function LoginButton() {
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle ,supabase} = useAuth();
 
   const handleLogin = async () => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(supabase);
     } catch (error) {
       console.error('Login failed:', error);
     }

@@ -41,7 +41,7 @@ import NextLink from 'next/link';
 
 export default function Header() {
   const { isOpen, onToggle, onClose } = useDisclosure();
-  const { user, signOut } = useAuth();
+  const { user, signOut,supabase} = useAuth();
   const router = useRouter();
   
   // ユーザー名を取得
@@ -58,7 +58,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await signOut(supabase);
       router.push('/auth/login');
     } catch (error) {
       console.error('Logout failed:', error);

@@ -4,11 +4,11 @@ import { Button } from '@chakra-ui/react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LogoutButton() {
-  const { signOut } = useAuth();
+  const { signOut,supabase } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      await signOut(supabase);
     } catch (error) {
       console.error('Logout failed:', error);
     }
