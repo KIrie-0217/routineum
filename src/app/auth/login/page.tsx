@@ -8,12 +8,14 @@ import {
   Text, 
   Button, 
   Container, 
-  useBreakpointValue 
+  useBreakpointValue, 
+  ResponsiveValue
 } from '@chakra-ui/react';
 import LoginButton from '@/components/auth/LoginButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { TextAlign } from 'chart.js';
 
 export default function LoginPage() {
   const { user, isLoading } = useAuth();
@@ -25,7 +27,7 @@ export default function LoginPage() {
   const boxPadding = useBreakpointValue({ base: 4, md: 8 });
   const containerMaxW = useBreakpointValue({ base: '90%', sm: '450px', md: '500px' });
   const spacing = useBreakpointValue({ base: 4, md: 8 });
-  const textAlign = useBreakpointValue({ base: 'center', md: 'center' });
+  const textAlign : ResponsiveValue<TextAlign> = useBreakpointValue({ base: 'center', md: 'center' }) ?? 'center';
 
   useEffect(() => {
     if (user && !isLoading) {
