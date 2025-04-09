@@ -106,6 +106,9 @@ export default function LoginPage() {
             <Text fontSize="sm" color="gray.500">
               アプリについての詳細は <Link as={NextLink} href="/about" color="blue.500">こちら</Link> をご覧ください
             </Text>
+            <Text fontSize="sm" color="gray.500">
+              <Link as={NextLink} href="/privacy-policy" color="blue.500">プライバシーポリシー</Link>
+            </Text>
           </VStack>
         </Container>
       </Flex>
