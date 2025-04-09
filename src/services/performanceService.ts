@@ -1,14 +1,16 @@
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { Database } from "@/types/database";
 import {
   Performance,
   NewPerformance,
   UpdatePerformance,
 } from "@/types/models/performance";
-
-const supabase = getSupabaseClient();
+import { SupabaseClient } from "@supabase/supabase-js";
 
 // 特定のユーザーのルーチン一覧を取得
-export async function getPerformances(userId: string): Promise<Performance[]> {
+export async function getPerformances(
+  userId: string,
+  supabase: SupabaseClient<Database>
+): Promise<Performance[]> {
   const { data, error } = await supabase
     .from("performances")
     .select("*")
@@ -24,7 +26,10 @@ export async function getPerformances(userId: string): Promise<Performance[]> {
 }
 
 // 特定のルーチンを取得
-export async function getPerformance(id: string): Promise<Performance> {
+export async function getPerformance(
+  id: string,
+  supabase: SupabaseClient<Database>
+): Promise<Performance> {
   const { data, error } = await supabase
     .from("performances")
     .select("*")
@@ -41,7 +46,8 @@ export async function getPerformance(id: string): Promise<Performance> {
 
 // 新しいルーチンを作成
 export async function createPerformance(
-  performance: NewPerformance
+  performance: NewPerformance,
+  supabase: SupabaseClient<Database>
 ): Promise<Performance> {
   // 数値フィールドの処理
   const processedData = {
@@ -112,7 +118,8 @@ export async function createPerformance(
 // ルーチンを更新
 export async function updatePerformance(
   id: string,
-  updates: UpdatePerformance
+  updates: UpdatePerformance,
+  supabase: SupabaseClient<Database>
 ): Promise<Performance> {
   // 数値フィールドの処理
   const processedUpdates = {
@@ -144,7 +151,10 @@ export async function updatePerformance(
 }
 
 // ルーチンを削除
-export async function deletePerformance(id: string): Promise<void> {
+export async function deletePerformance(
+  id: string,
+  supabase: SupabaseClient<Database>
+): Promise<void> {
   const { error } = await supabase.from("performances").delete().eq("id", id);
 
   if (error) {
@@ -155,7 +165,8 @@ export async function deletePerformance(id: string): Promise<void> {
 
 // 完了したルーチンの数を取得
 export async function getCompletedPerformancesCount(
-  userId: string
+  userId: string,
+  supabase: SupabaseClient<Database>
 ): Promise<number> {
   const { count, error } = await supabase
     .from("performances")
@@ -175,7 +186,8 @@ export async function getCompletedPerformancesCount(
 
 // 予定されているルーチンの数を取得
 export async function getUpcomingPerformancesCount(
-  userId: string
+  userId: string,
+  supabase: SupabaseClient<Database>
 ): Promise<number> {
   const { count, error } = await supabase
     .from("performances")

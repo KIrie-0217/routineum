@@ -1,4 +1,5 @@
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { Database } from "@/types/database";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 // シークエンスの練習記録の型定義
 export type TechniquePractice = {
@@ -12,11 +13,10 @@ export type TechniquePractice = {
 
 export type NewTechniquePractice = Omit<TechniquePractice, "id" | "created_at">;
 
-const supabase = getSupabaseClient();
-
 // 特定のシークエンスの練習記録を取得
 export async function getTechniquePractices(
-  techniqueId: string
+  techniqueId: string,
+  supabase: SupabaseClient<Database>
 ): Promise<TechniquePractice[]> {
   const { data, error } = await supabase
     .from("technique_practices")
@@ -34,7 +34,8 @@ export async function getTechniquePractices(
 
 // 新しい練習記録を作成
 export async function createTechniquePractice(
-  practice: NewTechniquePractice
+  practice: NewTechniquePractice,
+  supabase: SupabaseClient<Database>
 ): Promise<TechniquePractice> {
   const { data, error } = await supabase
     .from("technique_practices")
@@ -51,7 +52,10 @@ export async function createTechniquePractice(
 }
 
 // 練習記録を削除
-export async function deleteTechniquePractice(id: string): Promise<void> {
+export async function deleteTechniquePractice(
+  id: string,
+  supabase: SupabaseClient<Database>
+): Promise<void> {
   const { error } = await supabase
     .from("technique_practices")
     .delete()
@@ -65,7 +69,8 @@ export async function deleteTechniquePractice(id: string): Promise<void> {
 
 // 特定のシークエンスの最新の成功率を取得
 export async function getLatestSuccessRate(
-  techniqueId: string
+  techniqueId: string,
+  supabase: SupabaseClient<Database>
 ): Promise<number | null> {
   const { data, error } = await supabase
     .from("technique_practices")
@@ -90,7 +95,8 @@ export async function getLatestSuccessRate(
 // 特定のシークエンスの成功率の推移を取得（グラフ表示用）
 export async function getSuccessRateHistory(
   techniqueId: string,
-  limit: number = 10
+  limit: number = 10,
+  supabase: SupabaseClient<Database>
 ): Promise<TechniquePractice[]> {
   const { data, error } = await supabase
     .from("technique_practices")
@@ -110,7 +116,8 @@ export async function getSuccessRateHistory(
 // 特定のシークエンスの直近10回の成功率の平均を取得
 export async function getAverageSuccessRate(
   techniqueId: string,
-  count: number = 10
+  count: number = 10,
+  supabase: SupabaseClient<Database>
 ): Promise<number | null> {
   const { data, error } = await supabase
     .from("technique_practices")
