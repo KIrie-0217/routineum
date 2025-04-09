@@ -1,8 +1,6 @@
-import { getSupabaseClient } from "@/lib/supabase/client";
 import { Database } from "@/types/database";
 import { fetchWithRetry } from "@/utils/supabaseUtils";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { number, string } from "zod";
 
 export async function fetchPractices(
   userId: string,
@@ -12,17 +10,15 @@ export async function fetchPractices(
     .from("performances")
     .select("id")
     .eq("user_id", userId);
-  const { data: performances, error: fetchError } = await fetchWithRetry(
-    supabaseQuery,
-    {
-      maxRetries: 3,
-      timeoutMs: 500,
-      exponentialBackoff: true,
-      onRetry: (attempt, error) => {
-        console.log(`Retry attempt ${attempt} checking performance`, error);
-      },
-    }
-  );
+  const { data, error: fetchError } = await fetchWithRetry(supabaseQuery, {
+    maxRetries: 3,
+    timeoutMs: 500,
+    exponentialBackoff: true,
+    onRetry: (attempt, error) => {
+      console.log(`Retry attempt ${attempt} checking performance`, error);
+    },
+  });
+  const performances: { id: string }[] = Array.isArray(data) ? data : [];
 
   if (!performances || performances.length === 0) return [];
 
@@ -34,7 +30,7 @@ export async function fetchPractices(
     .select("success_rate, practice_date")
     .in("performance_id", performanceIds);
 
-  const { data: perfPractices, error: _ } = await fetchWithRetry(
+  const { data: perfData, error: _ } = await fetchWithRetry(
     performancePracticesQuery,
     {
       maxRetries: 5,
@@ -45,6 +41,8 @@ export async function fetchPractices(
       },
     }
   );
+  const perfPractices: { success_rate: number; practice_date: string }[] =
+    (perfData as { success_rate: number; practice_date: string }[]) ?? [];
 
   return perfPractices || [];
 }

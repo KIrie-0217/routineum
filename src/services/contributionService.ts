@@ -1,10 +1,38 @@
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { Database } from "@/types/database";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { subDays } from "date-fns";
 
-const supabase = getSupabaseClient();
+export type totalCotributionData = {
+  techniquePractices: {
+    id: string;
+    practice_date: string;
+    technique_id: string;
+    techniques: { performance_id: string };
+  }[];
+  performancePractices: {
+    id: string;
+    practice_date: string;
+    performance_id: string;
+  }[];
+};
+
+export type performanceCotributionData = {
+  techniquePractices: {
+    id: string;
+    practice_date: string;
+  }[];
+  performancePractices: {
+    id: string;
+    practice_date: string;
+  }[];
+};
 
 // ユーザーの全ての練習記録を取得する関数
-export async function getUserPracticeContributions(userId: string, days = 365) {
+export async function getUserPracticeContributions(
+  userId: string,
+  days = 365,
+  supabase: SupabaseClient<Database>
+) {
   try {
     if (!userId) {
       console.error("getUserPracticeContributions: userId is missing");
@@ -52,7 +80,17 @@ export async function getUserPracticeContributions(userId: string, days = 365) {
     const techniqueIds = techniques?.map((t) => t.id) || [];
 
     // シークエンスの練習記録を取得
-    let techniquePractices = [];
+    let techniquePractices:
+      | {
+          id: string;
+          practice_date: string;
+          technique_id: string;
+          techniques: {
+            performance_id: string;
+          };
+        }[]
+      | [] = [];
+
     if (techniqueIds.length > 0) {
       const { data, error: techniqueError } = await supabase
         .from("technique_practices")
@@ -109,7 +147,8 @@ export async function getUserPracticeContributions(userId: string, days = 365) {
 // 特定のルーチンに関連する全ての練習記録を取得する関数
 export async function getPerformanceContributions(
   performanceId: string,
-  days = 365
+  days = 365,
+  supabase: SupabaseClient<Database>
 ) {
   const startDate = subDays(new Date(), days).toISOString();
 
@@ -158,7 +197,8 @@ export async function getPerformanceContributions(
 // ユーザーの全てのルーチンに関連する練習記録を取得する関数
 export async function getAllUserPerformanceContributions(
   userId: string,
-  days = 365
+  days = 365,
+  supabase: SupabaseClient<Database>
 ) {
   const startDate = subDays(new Date(), days).toISOString();
 
