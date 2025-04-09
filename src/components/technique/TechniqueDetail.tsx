@@ -37,6 +37,7 @@ import { getTechniqueById } from '@/services/techniqueService';
 import { getTechniquePractices, getLatestSuccessRate } from '@/services/techniquePracticeService';
 import TechniquePracticeList from './TechniquePracticeList';
 import { formatDate } from '@/utils/dateUtils';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Chart.jsの設定
 ChartJS.register(
@@ -59,6 +60,7 @@ export default function TechniqueDetail({ techniqueId }: TechniqueDetailProps) {
   const [chartData, setChartData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
+  const supabase = useAuth().supabase;
 
   useEffect(() => {
     loadTechniqueData();
@@ -69,15 +71,15 @@ export default function TechniqueDetail({ techniqueId }: TechniqueDetailProps) {
       setIsLoading(true);
       
       // シークエンスの基本情報を取得
-      const techniqueData = await getTechniqueById(techniqueId);
+      const techniqueData = await getTechniqueById(techniqueId,supabase);
       setTechnique(techniqueData);
       
       // 最新の成功率を取得
-      const latestSuccessRate = await getLatestSuccessRate(techniqueId);
+      const latestSuccessRate = await getLatestSuccessRate(techniqueId,supabase);
       setLatestRate(latestSuccessRate);
       
       // 練習記録の履歴を取得してグラフデータを作成
-      const practices = await getTechniquePractices(techniqueId);
+      const practices = await getTechniquePractices(techniqueId,supabase);
       
       if (practices.length > 0) {
         // 日付順に並べ替え

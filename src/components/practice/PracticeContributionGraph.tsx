@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text, Tooltip, VStack, HStack, Flex, useColorModeValue } from '@chakra-ui/react';
-import CalendarHeatmap from 'react-calendar-heatmap';
+import CalendarHeatmap, { ReactCalendarHeatmapValue, TooltipDataAttrs } from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
 import { format, subDays, parseISO, differenceInDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -139,14 +139,34 @@ const PracticeContributionGraph: React.FC<PracticeContributionGraphProps> = ({
               if (!value || value.count === 0) return 'color-empty';
               return `color-scale-${Math.min(4, Math.floor(value.count / 3))}`;
             }}
-            tooltipDataAttrs={(value: any) => {
+            tooltipDataAttrs={(value: ReactCalendarHeatmapValue<string> | undefined) => {
               if (!value || !value.date) return {};
+              const contributionValue : DailyContribution = {
+                date: value.date,
+                count: value.count || 0,
+                details: {
+                  techniques: value.details?.techniques || 0,
+                  performances: value.details?.performances || 0,
+                } 
+              }
+  
               return {
-                'data-tip': getTooltipContent(value),
+                'string': getTooltipContent(contributionValue),
               };
             }}
             showWeekdayLabels={true}
-            titleForValue={(value) => value ? getTooltipContent(value) : '記録なし'}
+            titleForValue={(value: ReactCalendarHeatmapValue<string> | undefined) => {
+              if (!value || !value.date) return "";
+              const contributionValue : DailyContribution = {
+                date: value.date,
+                count: value.count || 0,
+                details: {
+                  techniques: value.details?.techniques || 0,
+                  performances: value.details?.performances || 0,
+                } 
+              }
+              return value ? getTooltipContent(contributionValue) : '記録なし'             
+            }}
             gutterSize={1}
           />
         </Box>

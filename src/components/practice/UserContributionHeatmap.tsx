@@ -26,7 +26,7 @@ const UserContributionHeatmap: React.FC<UserContributionHeatmapProps> = ({
   days = 365,
   title = '練習記録の履歴',
 }) => {
-  const { user } = useAuth();
+  const { user,supabase} = useAuth();
   const [contributions, setContributions] = useState<DailyContribution[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,7 @@ const UserContributionHeatmap: React.FC<UserContributionHeatmapProps> = ({
       
       try {
         setIsLoading(true);
-        const data = await getAllUserPerformanceContributions(user.id, days);
+        const data = await getAllUserPerformanceContributions(user.id, days,supabase);
         
         // 全ての練習記録を統合
         const allPractices = [
@@ -168,11 +168,22 @@ const UserContributionHeatmap: React.FC<UserContributionHeatmapProps> = ({
               tooltipDataAttrs={(value: any) => {
                 if (!value || !value.date) return {};
                 return {
-                  'data-tip': getTooltipContent(value),
+                  'string': getTooltipContent(value),
                 };
               }}
               showWeekdayLabels={true}
-              titleForValue={(value) => value ? getTooltipContent(value) : '記録なし'}
+              titleForValue={(value) => {
+                if (!value || !value.date) return "";
+                const contributionValue : DailyContribution = {
+                  date: value.date,
+                  count: value.count || 0,
+                  details: {
+                    techniques: value.details?.techniques || 0,
+                    performances: value.details?.performances || 0,
+                  } 
+                }
+                return value ? getTooltipContent(contributionValue) : '記録なし'
+              }}
               gutterSize={1}
             />
           </Box>

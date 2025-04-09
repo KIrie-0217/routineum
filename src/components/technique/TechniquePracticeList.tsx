@@ -35,6 +35,8 @@ import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
 import { TechniquePractice, NewTechniquePractice, getTechniquePractices, createTechniquePractice, deleteTechniquePractice } from '@/services/techniquePracticeService';
 import TechniquePracticeForm from './TechniquePracticeForm';
 import { formatDate } from '@/utils/dateUtils';
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TechniquePracticeListProps {
   techniqueId: string;
@@ -49,6 +51,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const toast = useToast();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
+  const supabase = useAuth().supabase;
 
   useEffect(() => {
     loadPractices();
@@ -57,7 +60,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
   const loadPractices = async () => {
     try {
       setIsLoading(true);
-      const data = await getTechniquePractices(techniqueId);
+      const data = await getTechniquePractices(techniqueId,supabase);
       setPractices(data);
     } catch (error) {
       console.error('Failed to load practices:', error);
@@ -85,7 +88,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
     if (!deleteTarget) return;
     
     try {
-      await deleteTechniquePractice(deleteTarget.id);
+      await deleteTechniquePractice(deleteTarget.id,supabase);
       setPractices(practices.filter(p => p.id !== deleteTarget.id));
       toast({
         title: '練習記録を削除しました',
@@ -108,7 +111,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
 
   const handleSubmit = async (data: NewTechniquePractice) => {
     try {
-      const created = await createTechniquePractice(data);
+      const created = await createTechniquePractice(data,supabase);
       setPractices([created, ...practices]);
       onFormClose();
     } catch (error) {

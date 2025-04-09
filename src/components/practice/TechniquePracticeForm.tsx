@@ -20,6 +20,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createTechniquePractice } from '@/services/practiceService';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 // バリデーションスキーマ
 const practiceSchema = z.object({
@@ -44,6 +46,7 @@ export default function TechniquePracticeForm({
 }: TechniquePracticeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  const {supabase}= useAuth();
   
   const roundToStep = (value: number, step: number) => {
     return Math.round(value / step) * step;
@@ -69,7 +72,7 @@ export default function TechniquePracticeForm({
         technique_id: techniqueId,
         success_rate: data.success_rate,
         notes: data.notes || null,
-      });
+      },supabase);
       
       reset();
       onSuccess();

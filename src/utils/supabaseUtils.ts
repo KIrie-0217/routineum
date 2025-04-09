@@ -107,6 +107,5 @@ export async function fetchWithRetry<T>(
   if (result.error && result.error.code === "PGRST116") {
     return { data: null, error: null };
   }
-
-  return result;
+  return result as { data: T | null; error: any };
 }

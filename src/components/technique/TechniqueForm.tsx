@@ -14,6 +14,7 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { NewTechnique, Technique } from '@/types/models/technique';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TechniqueFormProps {
   performanceId: string;

@@ -38,6 +38,7 @@ import { Technique, NewTechnique } from '@/types/models/technique';
 import { getTechniquesByPerformanceId, createTechnique, updateTechnique, deleteTechnique } from '@/services/techniqueService';
 import TechniqueForm from './TechniqueForm';
 import { getAverageSuccessRate } from '@/services/techniquePracticeService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TechniqueListProps {
   performanceId: string;
@@ -54,7 +55,8 @@ export default function TechniqueList({ performanceId, onTechniqueClick }: Techn
   const { isOpen: isFormOpen, onOpen: onFormOpen, onClose: onFormClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const toast = useToast();
-  const cancelRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null); 
+  const supabase = useAuth().supabase;
 
   useEffect(() => {
     loadTechniques();
@@ -63,7 +65,7 @@ export default function TechniqueList({ performanceId, onTechniqueClick }: Techn
   const loadTechniques = async () => {
     try {
       setIsLoading(true);
-      const data = await getTechniquesByPerformanceId(performanceId);
+      const data = await getTechniquesByPerformanceId(performanceId,supabase);
       setTechniques(data);
       
       // 各シークエンスの直近10回の平均成功率を取得
@@ -71,7 +73,7 @@ export default function TechniqueList({ performanceId, onTechniqueClick }: Techn
       const rates: {[key: string]: number | null} = {};
       await Promise.all(data.map(async (technique) => {
         try {
-          const rate = await getAverageSuccessRate(technique.id);
+          const rate = await getAverageSuccessRate(technique.id,10,supabase);
           rates[technique.id] = rate;
         } catch (error) {
           console.error(`Failed to load success rate for technique ${technique.id}:`, error);
@@ -114,7 +116,7 @@ export default function TechniqueList({ performanceId, onTechniqueClick }: Techn
     if (!deleteTarget) return;
     
     try {
-      await deleteTechnique(deleteTarget.id);
+      await deleteTechnique(deleteTarget.id,supabase);
       setTechniques(techniques.filter(t => t.id !== deleteTarget.id));
       toast({
         title: 'シークエンスを削除しました',
@@ -139,14 +141,14 @@ export default function TechniqueList({ performanceId, onTechniqueClick }: Techn
     try {
       if (selectedTechnique) {
         // 更新
-        const updated = await updateTechnique(selectedTechnique.id, data as NewTechnique);
+        const updated = await updateTechnique(selectedTechnique.id, data as NewTechnique,supabase);
         setTechniques(techniques.map(t => t.id === updated.id ? updated : t));
       } else {
         // 新規作成
         const created = await createTechnique({
           ...data as NewTechnique,
           performance_id: performanceId
-        });
+        },supabase);
         setTechniques([...techniques, created]);
       }
       onFormClose();
