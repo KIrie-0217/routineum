@@ -1,24 +1,22 @@
 'use client';
 
-import { useState, useEffect, use, Usable } from 'react';
+import { useState, useEffect  } from 'react';
 import { Box, Heading, useToast, Spinner, Center } from '@chakra-ui/react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import PerformanceForm from '@/components/performance/PerformanceForm';
 import { getPerformance, updatePerformance } from '@/services/performanceService';
 import { Performance, UpdatePerformance } from '@/types/models/performance';
 
-type EditPerformancePageProps = Promise< { id: string }>
+type EditPerformancePageProps = { id: string }
 
-export default async function EditPerformancePage(props: {
-  params: EditPerformancePageProps;
-}) {
-  const { id } = await props.params; 
+export default function EditPerformancePage() {
+  const { id } = useParams<EditPerformancePageProps>(); 
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user ,supabase} = useAuth();
+  const { user ,supabase } = useAuth();
   const router = useRouter();
   const toast = useToast();
 

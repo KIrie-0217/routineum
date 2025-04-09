@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Box,
   Heading,
@@ -51,9 +51,9 @@ import PracticeContributionGraph from '@/components/practice/PracticeContributio
 import { PerformanceProgressChart, TechniqueProgressChart, WeeklyAverageGauge, TechniquesComparisonChart } from '@/components/charts';
 import { getPerformancePractices, getTechniquePractices, deletePerformancePractice, deleteTechniquePractice, getAllPerformancePractices, getAllTechniquePractices } from '@/services/practiceService';
 
-type PerformanceDetailPageProps = Promise<{ id: string }>
+type PerformanceDetailPageProps = { id: string }
 
-export default async function PerformanceDetailPage(props: { params : PerformanceDetailPageProps}) {
+export default function PerformanceDetailPage() {
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -72,7 +72,7 @@ export default async function PerformanceDetailPage(props: { params : Performanc
     techniquePractices: [],
     performancePractices: []
   });
-  const params = await props.params;
+  const params = useParams<PerformanceDetailPageProps>();
   
   const { user,supabase } = useAuth();
   const router = useRouter();

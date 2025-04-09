@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Box,
   Button,
@@ -22,19 +22,19 @@ import { Performance } from '@/types/models/performance';
 import { Technique } from '@/types/models/technique';
 import TechniqueDetail from '@/components/technique/TechniqueDetail';
 
-type TechniquePageProps = Promise<{
+type TechniquePageProps = {
     id: string;
     techniqueId: string;
-    }>
+    }
 
-export default async function TechniquePage(props : { params : TechniquePageProps}) {
+export default function TechniquePage() {
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [technique, setTechnique] = useState<Technique | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { user,supabase } = useAuth();
   const router = useRouter();
   const toast = useToast();
-  const params = await props.params;
+  const params = useParams<TechniquePageProps>();
 
   useEffect(() => {
     async function loadData() {
