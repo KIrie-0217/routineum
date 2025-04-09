@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO, subDays, subMonths, isAfter } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getAllTechniquePractices } from '@/services/practiceService';
+import { getSupabaseClient } from '@/lib/supabase/client';
 
 // Chart.jsの必要なコンポーネントを登録
 ChartJS.register(
@@ -49,11 +50,20 @@ export default function TechniqueProgressChart({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<string>('all'); // 'all', 'month', 'week'
+  const supabase = getSupabaseClient();
 
   // カラーテーマ
   const lineColor = useColorModeValue('rgb(76, 175, 80)', 'rgb(129, 199, 132)');
   const gridColor = useColorModeValue('rgba(0, 0, 0, 0.1)', 'rgba(255, 255, 255, 0.1)');
   const textColor = useColorModeValue('rgba(0, 0, 0, 0.8)', 'rgba(255, 255, 255, 0.8)');
+
+  
+  const getLatestValue = () => {
+    const data = chartData.datasets[0].data[0];
+    if (typeof data === 'number') return data;
+    if (data && 'y' in data) return data.y;
+    return 0;
+  };
 
   // グラフのオプション
   const options: ChartOptions<'line'> = {
@@ -114,7 +124,7 @@ export default function TechniqueProgressChart({
         setIsLoading(true);
         setError(null);
         
-        const practices = await getAllTechniquePractices(techniqueId);
+        const practices = await getAllTechniquePractices(techniqueId,supabase);
         
         if (practices.length === 0) {
           setIsLoading(false);
@@ -185,6 +195,8 @@ export default function TechniqueProgressChart({
 
     // 移動平均を計算（3点移動平均）
     const movingAverages = calculateMovingAverage(successRates, 3);
+
+    
 
     setChartData({
       labels,
@@ -273,7 +285,7 @@ export default function TechniqueProgressChart({
     return (
       <Box h="300px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
         <Text color="gray.500" mb={2}>グラフを表示するには2つ以上の記録が必要です</Text>
-        <Text fontWeight="bold">最新の成功率: {chartData.datasets[0].data[0]}%</Text>
+        <Text fontWeight="bold">最新の成功率: {getLatestValue()}%</Text>
       </Box>
     );
   }

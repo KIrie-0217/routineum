@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import { getTotalPerformancesCount, getTotalTechniquesCount, getTotalPracticeSessionsCount, getRecentPerformances, fetchPractices } from '@/services/dashboardService';
-import { getUserPracticeContributions } from '@/services/contributionService';
+import { getUserPracticeContributions,totalCotributionData } from '@/services/contributionService';
 import { Performance } from '@/types/models/performance';
 import { formatDate } from '@/utils/dateUtils';
 import { DashboardSummaryChart, WeeklyAverageGauge } from '@/components/charts';
 import UserContributionHeatmap from '@/components/practice/UserContributionHeatmap';
+
 
 export default function DashboardPage() {
   const { user, isLoading,supabase } = useAuth();
@@ -22,7 +23,7 @@ export default function DashboardPage() {
   const [practiceCount, setPracticeCount] = useState<number>(0);
   const [recentPerformances, setRecentPerformances] = useState<Performance[]>([]);
   const [statsLoading, setStatsLoading] = useState<boolean>(false);
-  const [contributionData, setContributionData] = useState({
+  const [contributionData, setContributionData] = useState<totalCotributionData>({
     techniquePractices: [],
     performancePractices: []
   });
@@ -84,7 +85,7 @@ export default function DashboardPage() {
           console.error('Error loading recent performances:', err);
           return [];
         })
-      const contributions = await getUserPracticeContributions(userId).catch(err => {
+      const contributions = await getUserPracticeContributions(userId,365,supabase).catch(err => {
           console.error('Error loading contribution data:', err);
           return { techniquePractices: [], performancePractices: [] };
         }); 

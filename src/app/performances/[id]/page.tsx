@@ -40,7 +40,7 @@ import { EditIcon, DeleteIcon, ExternalLinkIcon, AddIcon } from '@chakra-ui/icon
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import { getPerformance, deletePerformance } from '@/services/performanceService';
-import { getPerformanceContributions } from '@/services/contributionService';
+import { getPerformanceContributions,performanceCotributionData} from '@/services/contributionService';
 import { Performance } from '@/types/models/performance';
 import { formatDate } from '@/utils/dateUtils';
 import TechniqueList from '@/components/technique/TechniqueList';
@@ -51,7 +51,9 @@ import PracticeContributionGraph from '@/components/practice/PracticeContributio
 import { PerformanceProgressChart, TechniqueProgressChart, WeeklyAverageGauge, TechniquesComparisonChart } from '@/components/charts';
 import { getPerformancePractices, getTechniquePractices, deletePerformancePractice, deleteTechniquePractice, getAllPerformancePractices, getAllTechniquePractices } from '@/services/practiceService';
 
-export default function PerformanceDetailPage({ params }: { params: { id: string } }) {
+type PerformanceDetailPageProps = Promise<{ id: string }>
+
+export default async function PerformanceDetailPage(props: { params : PerformanceDetailPageProps}) {
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -66,12 +68,13 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
   const [performancePracticesTotalPages, setPerformancePracticesTotalPages] = useState(1);
   const [techniquePracticesTotalPages, setTechniquePracticesTotalPages] = useState(1);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
-  const [contributionData, setContributionData] = useState({
+  const [contributionData, setContributionData] = useState<performanceCotributionData>({
     techniquePractices: [],
     performancePractices: []
   });
+  const params = await props.params;
   
-  const { user } = useAuth();
+  const { user,supabase } = useAuth();
   const router = useRouter();
    
   const toast = useToast();
@@ -88,16 +91,14 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
     onClose: handleTechniqueModalClose 
   } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
-  // paramsをReact.use()でラップして安全に使用
-  const resolvedParams = use(params);
-
+  
   useEffect(() => {
     async function loadPerformance() {
       if (!user) return;
       
       try {
         setIsLoading(true);
-        const data = await getPerformance(resolvedParams.id);
+        const data = await getPerformance(params.id,supabase);
         
         // 他のユーザーのルーチンにアクセスしようとした場合はリダイレクト
         if (data && data.user_id !== user.id) {
@@ -123,7 +124,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
         }
 
         // 練習記録の貢献グラフ用データを取得
-        const contributions = await getPerformanceContributions(resolvedParams.id);
+        const contributions = await getPerformanceContributions(params.id,365,supabase);
         setContributionData(contributions);
       } catch (error) {
         console.error('Failed to load performance:', error);
@@ -139,7 +140,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
     }
 
     loadPerformance();
-  }, [resolvedParams.id, user, router, toast]);
+  }, [params.id, user, router, toast]);
 
   // ルーチン練習記録を取得
   useEffect(() => {
@@ -148,7 +149,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
       
       try {
         setIsPracticesLoading(true);
-        const result = await getPerformancePractices(resolvedParams.id, performancePracticePage);
+        const result = await getPerformancePractices(params.id, performancePracticePage,10,supabase);
         setPerformancePractices(result.practices);
         setPerformancePracticesTotalPages(result.totalPages);
       } catch (error) {
@@ -165,16 +166,16 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
     }
 
     loadPractices();
-  }, [resolvedParams.id, user, toast, performancePracticePage]);
+  }, [params.id, user, toast, performancePracticePage]);
 
   const handleEdit = () => {
-    router.push(`/performances/${resolvedParams.id}/edit`);
+    router.push(`/performances/${params.id}/edit`);
   };
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await deletePerformance(resolvedParams.id);
+      await deletePerformance(params.id,supabase);
       
       toast({
         title: 'ルーチンを削除しました',
@@ -205,7 +206,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
     
     try {
       setIsTechniquePracticesLoading(true);
-      const result = await getTechniquePractices(technique.id, 1);
+      const result = await getTechniquePractices(technique.id, 1,10,supabase);
       setTechniquePractices(result.practices);
       setTechniquePracticesTotalPages(result.totalPages);
       
@@ -236,7 +237,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
   // ルーチン練習記録追加後の処理
   const handlePerformancePracticeSuccess = async () => {
     try {
-      const result = await getPerformancePractices(resolvedParams.id, performancePracticePage);
+      const result = await getPerformancePractices(params.id, performancePracticePage,10,supabase);
       setPerformancePractices(result.practices);
       setPerformancePracticesTotalPages(result.totalPages);
       
@@ -255,7 +256,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
   const handleTechniquePracticeSuccess = async () => {
     if (selectedTechnique) {
       try {
-        const result = await getTechniquePractices(selectedTechnique.id, techniquePracticePage);
+        const result = await getTechniquePractices(selectedTechnique.id, techniquePracticePage,10,supabase);
         setTechniquePractices(result.practices);
         setTechniquePracticesTotalPages(result.totalPages);
         
@@ -274,9 +275,9 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
   // ルーチン練習記録の削除
   const handleDeletePerformancePractice = async (practiceId: string) => {
     try {
-      await deletePerformancePractice(practiceId);
+      await deletePerformancePractice(practiceId,supabase);
       // 練習記録を再取得
-      const result = await getPerformancePractices(resolvedParams.id, performancePracticePage);
+      const result = await getPerformancePractices(params.id, performancePracticePage,10,supabase);
       setPerformancePractices(result.practices);
       setPerformancePracticesTotalPages(result.totalPages);
       
@@ -300,10 +301,10 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
   // シークエンス練習記録の削除
   const handleDeleteTechniquePractice = async (practiceId: string) => {
     try {
-      await deleteTechniquePractice(practiceId);
+      await deleteTechniquePractice(practiceId,supabase);
       // シークエンス練習記録を再取得
       if (selectedTechnique) {
-        const result = await getTechniquePractices(selectedTechnique.id, techniquePracticePage);
+        const result = await getTechniquePractices(selectedTechnique.id, techniquePracticePage,10,supabase);
         setTechniquePractices(result.practices);
         setTechniquePracticesTotalPages(result.totalPages);
         
@@ -336,7 +337,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
     if (selectedTechnique) {
       try {
         setIsTechniquePracticesLoading(true);
-        const result = await getTechniquePractices(selectedTechnique.id, page);
+        const result = await getTechniquePractices(selectedTechnique.id, page,10,supabase);
         setTechniquePractices(result.practices);
         setTechniquePracticesTotalPages(result.totalPages);
       } catch (error) {
@@ -487,7 +488,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
                       <WeeklyAverageGauge 
                         title="直近1週間のルーチン平均成功率"
                         colorScheme="blue"
-                        fetchPractices={() => getAllPerformancePractices(resolvedParams.id)}
+                        fetchPractices={() => getAllPerformancePractices(params.id,supabase)}
                       /> 
                     </Box>
                   </GridItem>
@@ -498,13 +499,13 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
                       overflowY="hidden"
                       minH={{ base: "350px", md: "300px" }}
                     >
-                      <PerformanceProgressChart performanceId={resolvedParams.id} />
+                      <PerformanceProgressChart performanceId={params.id} />
                     </Box>
                   </GridItem>
                 </SimpleGrid>
               </Box>
               <Box p={{ base: 2, md: 4 }} mt={{ base: 4, md: 6 }}>
-                <TechniquesComparisonChart performanceId={resolvedParams.id} />
+                <TechniquesComparisonChart performanceId={params.id} />
               </Box>
             </TabPanel>
             <TabPanel px={{ base: 2, md: 4 }} py={{ base: 3, md: 5 }}>
@@ -532,7 +533,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
             </TabPanel>
             <TabPanel px={{ base: 2, md: 4 }} py={{ base: 3, md: 5 }}>
               <TechniqueList 
-                performanceId={resolvedParams.id} 
+                performanceId={params.id} 
                 onTechniqueClick={handleTechniqueSelect}
               />
             </TabPanel>
@@ -547,7 +548,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
             <ModalCloseButton />
             <ModalBody pb={6}>
               <PerformancePracticeForm 
-                performanceId={resolvedParams.id} 
+                performanceId={params.id} 
                 onSuccess={() => {
                   handlePerformancePracticeSuccess();
                   onPerformancePracticeModalClose();
@@ -598,7 +599,7 @@ export default function PerformanceDetailPage({ params }: { params: { id: string
                             <WeeklyAverageGauge 
                               title={`${selectedTechnique.name}の週間平均`}
                               colorScheme="green"
-                              fetchPractices={() => getAllTechniquePractices(selectedTechnique.id)}
+                              fetchPractices={() => getAllTechniquePractices(selectedTechnique.id,supabase)}
                             />
                           </Box>
                         </VStack>

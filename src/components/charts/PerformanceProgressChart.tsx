@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
 import { format, parseISO, subDays, subMonths, isAfter } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getAllPerformancePractices } from '@/services/practiceService';
+import { getSupabaseClient } from '@/lib/supabase/client';
 
 // Chart.jsの必要なコンポーネントを登録
 ChartJS.register(
@@ -35,6 +36,8 @@ interface PerformanceProgressChartProps {
   title?: string;
 }
 
+
+
 export default function PerformanceProgressChart({
   performanceId,
   title = 'ルーチンの成功率推移'
@@ -48,6 +51,14 @@ export default function PerformanceProgressChart({
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<string>('all'); // 'all', 'month', 'week'
   const [isMobile, setIsMobile] = useState(false);
+  const supabase = getSupabaseClient();
+
+  const getLatestValue = () => {
+    const data = chartData.datasets[0].data[0];
+    if (typeof data === 'number') return data;
+    if (data && 'y' in data) return data.y;
+    return 0;
+  };
 
   // 画面サイズの検出
   useEffect(() => {
@@ -137,7 +148,7 @@ export default function PerformanceProgressChart({
         setIsLoading(true);
         setError(null);
         
-        const practices = await getAllPerformancePractices(performanceId);
+        const practices = await getAllPerformancePractices(performanceId,supabase);
         
         if (practices.length === 0) {
           setIsLoading(false);
@@ -318,7 +329,7 @@ export default function PerformanceProgressChart({
         width="100%"
       >
         <Text color="gray.500" mb={2} fontSize={{ base: "sm", md: "md" }}>グラフを表示するには2つ以上の記録が必要です</Text>
-        <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }}>最新の成功率: {chartData.datasets[0].data[0]}%</Text>
+        <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }}>最新の成功率: {getLatestValue()}%</Text>
       </Box>
     );
   }

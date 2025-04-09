@@ -22,20 +22,19 @@ import { Performance } from '@/types/models/performance';
 import { Technique } from '@/types/models/technique';
 import TechniqueDetail from '@/components/technique/TechniqueDetail';
 
-interface TechniquePageProps {
-  params: {
+type TechniquePageProps = Promise<{
     id: string;
     techniqueId: string;
-  };
-}
+    }>
 
-export default function TechniquePage({ params }: TechniquePageProps) {
+export default async function TechniquePage(props : { params : TechniquePageProps}) {
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [technique, setTechnique] = useState<Technique | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
+  const { user,supabase } = useAuth();
   const router = useRouter();
   const toast = useToast();
+  const params = await props.params;
 
   useEffect(() => {
     async function loadData() {
@@ -45,7 +44,7 @@ export default function TechniquePage({ params }: TechniquePageProps) {
         setIsLoading(true);
         
         // ルーチン情報の取得
-        const performanceData = await getPerformance(params.id);
+        const performanceData = await getPerformance(params.id,supabase);
         
         // 権限チェック
         if (performanceData.user_id !== user.id) {
@@ -62,7 +61,7 @@ export default function TechniquePage({ params }: TechniquePageProps) {
         setPerformance(performanceData);
         
         // シークエンス情報の取得
-        const techniqueData = await getTechniqueById(params.techniqueId);
+        const techniqueData = await getTechniqueById(params.techniqueId,supabase);
         
         // シークエンスが指定されたルーチンに属しているか確認
         if (techniqueData.performance_id !== params.id) {

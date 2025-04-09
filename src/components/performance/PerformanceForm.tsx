@@ -26,7 +26,7 @@ const performanceSchema = z.object({
   performance_date: z.string().min(1, '公演日は必須です'),
   music_link: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
-  is_completed: z.boolean().default(false),
+  is_completed: z.boolean(),
   result_percentage: z.union([
     z.number().min(0).max(100),
     z.null()
@@ -59,7 +59,7 @@ export default function PerformanceForm({ initialData, onSubmit, isSubmitting }:
       ? {
           ...initialData,
           performance_date: formatDate(initialData.performance_date),
-        }
+        } 
       : {
           name: '',
           performance_date: formatDate(new Date().toISOString()),
@@ -68,7 +68,7 @@ export default function PerformanceForm({ initialData, onSubmit, isSubmitting }:
           is_completed: false,
           result_percentage: null,
           ranking: null,
-        },
+        } ,
   });
 
   const isCompleted = watch('is_completed');

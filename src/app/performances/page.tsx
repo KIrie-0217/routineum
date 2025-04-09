@@ -19,7 +19,7 @@ export default function PerformancesPage() {
     techniquePractices: [],
     performancePractices: []
   });
-  const { user } = useAuth();
+  const { user,supabase } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function PerformancesPage() {
       
       try {
         setIsLoading(true);
-        const performanceData = await getPerformances(user.id);
+        const performanceData = await getPerformances(user.id,supabase);
         setPerformances(performanceData);
          
       } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, Usable } from 'react';
 import { Box, Heading, useToast, Spinner, Center } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,15 +9,18 @@ import PerformanceForm from '@/components/performance/PerformanceForm';
 import { getPerformance, updatePerformance } from '@/services/performanceService';
 import { Performance, UpdatePerformance } from '@/types/models/performance';
 
-export default function EditPerformancePage({ params }: { params: { id: string } }) {
+type EditPerformancePageProps = Promise< { id: string }>
+
+export default async function EditPerformancePage(props: {
+  params: EditPerformancePageProps;
+}) {
+  const { id } = await props.params; 
   const [performance, setPerformance] = useState<Performance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user ,supabase} = useAuth();
   const router = useRouter();
   const toast = useToast();
-  // paramsをReact.use()でラップして安全に使用
-  const resolvedParams = use(params);
 
   useEffect(() => {
     async function loadPerformance() {
@@ -25,7 +28,7 @@ export default function EditPerformancePage({ params }: { params: { id: string }
       
       try {
         setIsLoading(true);
-        const data = await getPerformance(resolvedParams.id);
+        const data = await getPerformance(id,supabase);
         
         // 他のユーザーのルーチンにアクセスしようとした場合はリダイレクト
         if (data && data.user_id !== user.id) {
@@ -54,12 +57,12 @@ export default function EditPerformancePage({ params }: { params: { id: string }
     }
 
     loadPerformance();
-  }, [resolvedParams.id, user, router, toast]);
+  }, [id, user, router, toast]);
 
   const handleSubmit = async (data: UpdatePerformance) => {
     try {
       setIsSubmitting(true);
-      await updatePerformance(resolvedParams.id, data);
+      await updatePerformance(id, data,supabase);
       
       toast({
         title: 'ルーチンを更新しました',
@@ -68,7 +71,7 @@ export default function EditPerformancePage({ params }: { params: { id: string }
         isClosable: true,
       });
       
-      router.push(`/performances/${resolvedParams.id}`);
+      router.push(`/performances/${id}`);
     } catch (error) {
       console.error('Failed to update performance:', error);
       toast({

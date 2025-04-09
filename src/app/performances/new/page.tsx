@@ -11,11 +11,11 @@ import { NewPerformance } from '@/types/models/performance';
 
 export default function NewPerformancePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user ,supabase} = useAuth();
   const router = useRouter();
   const toast = useToast();
 
-  const handleSubmit = async (data: NewPerformance) => {
+  const handleSubmit = async (data: NewPerformance| Partial<NewPerformance>) => {
     if (!user) {
       toast({
         title: 'ログインが必要です',
@@ -32,6 +32,9 @@ export default function NewPerformancePage() {
       // ユーザーIDを追加（auth.userのuidを使用）
       const performanceData: NewPerformance = {
         ...data,
+        name: data.name || '',
+        performance_date: data.performance_date || new Date().toISOString().split('T')[0],
+        is_completed: data.is_completed ?? false,
         user_id: user.id,
       };
       
@@ -39,7 +42,7 @@ export default function NewPerformancePage() {
       console.log('User object:', user);
       console.log('Submitting performance data:', performanceData);
       
-      await createPerformance(performanceData);
+      await createPerformance(performanceData,supabase);
       
       toast({
         title: 'ルーチンを作成しました',
