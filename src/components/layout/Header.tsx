@@ -258,5 +258,9 @@ const NAV_ITEMS: Array<NavItem> = [
   {
     label: 'ルーチン',
     href: '/performances',
-  }, 
+  },
+  {
+    label: 'About',
+    href: '/about',
+  },
 ];

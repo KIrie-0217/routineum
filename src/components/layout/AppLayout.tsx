@@ -6,7 +6,8 @@ import Header from './Header';
 import AuthGuard from '../auth/AuthGuard';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+// 認証が必要なレイアウト（デフォルト）
+const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
   const [layoutReady, setLayoutReady] = useState(false);
   
@@ -56,4 +57,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </Box>
     </AuthGuard>
   );
-}
+};
+
+// 認証が不要なレイアウト（Aboutページなど公開ページ用）
+export const PublicLayout = ({ children }: { children: React.ReactNode }) => {
+  // モバイルデバイス向けのパディング調整
+  const mainPadding = useBreakpointValue({ base: 2, md: 4 });
+  const contentMaxWidth = useBreakpointValue({ base: '100%', md: '1200px' });
+
+  return (
+    <Box minH="100vh" width="100%">
+      <Header />
+      <Box 
+        as="main" 
+        pt={mainPadding} 
+        px={mainPadding}
+        mx="auto"
+        maxW={contentMaxWidth}
+        overflowX="hidden"
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+};
+
+export { AppLayout };
+export default AppLayout;
