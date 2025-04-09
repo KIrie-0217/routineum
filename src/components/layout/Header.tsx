@@ -117,7 +117,6 @@ export default function Header() {
               <MenuButton
                 as={Box}
                 rounded={'full'}
-                variant={'link'}
                 cursor={'pointer'}
                 minW={0}>
                 <Avatar
