@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Box, Text, Tooltip, VStack, HStack, Flex, useColorModeValue } from '@chakra-ui/react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import 'react-calendar-heatmap/dist/styles.css';
-import { format, subDays, startOfDay, parseISO, differenceInDays } from 'date-fns';
+import { format, subDays, parseISO, differenceInDays } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { ReactTooltip } from 'react-tooltip';
 
 // 練習記録の型定義
 type PracticeRecord = {
