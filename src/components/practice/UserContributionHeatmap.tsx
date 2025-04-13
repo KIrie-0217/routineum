@@ -163,7 +163,7 @@ const UserContributionHeatmap: React.FC<UserContributionHeatmapProps> = ({
               values={contributions}
               classForValue={(value) => {
                 if (!value || value.count === 0) return 'color-empty';
-                return `color-scale-${Math.min(4, Math.floor(value.count / 3))}`;
+                return `color-scale-${Math.min(4, Math.floor(value.count / 25))}`;
               }}
               tooltipDataAttrs={(value: any) => {
                 if (!value || !value.date) return {};
