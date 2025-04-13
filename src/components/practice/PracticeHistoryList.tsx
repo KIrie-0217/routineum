@@ -19,7 +19,8 @@ import {
   Button,
   useToast
 } from '@chakra-ui/react';
-import { DeleteIcon } from '@chakra-ui/icons';
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
+import PracticeEditModal from './PracticeEditModal';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useState, useRef } from 'react';
@@ -36,7 +37,8 @@ interface PracticeHistoryListProps {
   practices: Practice[];
   isLoading: boolean;
   title?: string;
-  onDelete?: (practiceId: string) => Promise<void>;
+  onDelete?: (practiceId: string) => Promise<boolean>;
+  onEdit?: (practiceId: string, updates: { success_rate: number; notes: string | null }) => Promise<boolean>;
   totalPages?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
@@ -47,12 +49,24 @@ export default function PracticeHistoryList({
   isLoading, 
   title,
   onDelete,
+  onEdit,
   totalPages = 1,
   currentPage = 1,
   onPageChange
 }: PracticeHistoryListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingPractice, setEditingPractice] = useState<Practice | null>(null);
+  const [isEditLoading, setIsEditLoading] = useState(false);
+  
+  // 削除確認ダイアログ用
   const { isOpen, onOpen, onClose } = useDisclosure();
+  // 編集モーダル用
+  const { 
+    isOpen: isEditModalOpen, 
+    onOpen: onEditModalOpen, 
+    onClose: onEditModalClose 
+  } = useDisclosure();
+  
   const cancelRef = useRef<HTMLButtonElement>(null);
   const toast = useToast();
 
@@ -60,6 +74,38 @@ export default function PracticeHistoryList({
     e.stopPropagation();
     setDeletingId(practiceId);
     onOpen();
+  };
+  
+  const handleEditClick = (practice: Practice, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingPractice(practice);
+    onEditModalOpen();
+  };
+  
+  const handleSaveEdit = async (practiceId: string, updates: { success_rate: number; notes: string | null }) => {
+    if (!onEdit) return;
+    
+    try {
+      setIsEditLoading(true);
+      await onEdit(practiceId, updates);
+      onEditModalClose();
+      toast({
+        title: '練習記録を更新しました',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('練習記録の更新に失敗しました:', error);
+      toast({
+        title: '練習記録の更新に失敗しました',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsEditLoading(false);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -127,16 +173,28 @@ export default function PracticeHistoryList({
                 <Text fontSize="sm" color="gray.500">
                   {formatDistanceToNow(new Date(practice.practice_date), { addSuffix: true, locale: ja })}
                 </Text>
-                {onDelete && (
-                  <IconButton
-                    aria-label="記録を削除"
-                    icon={<DeleteIcon />}
-                    size="xs"
-                    colorScheme="red"
-                    variant="ghost"
-                    onClick={(e) => handleDeleteClick(practice.id, e)}
-                  />
-                )}
+                <HStack spacing={1}>
+                  {onEdit && (
+                    <IconButton
+                      aria-label="記録を編集"
+                      icon={<EditIcon />}
+                      size="xs"
+                      colorScheme="blue"
+                      variant="ghost"
+                      onClick={(e) => handleEditClick(practice, e)}
+                    />
+                  )}
+                  {onDelete && (
+                    <IconButton
+                      aria-label="記録を削除"
+                      icon={<DeleteIcon />}
+                      size="xs"
+                      colorScheme="red"
+                      variant="ghost"
+                      onClick={(e) => handleDeleteClick(practice.id, e)}
+                    />
+                  )}
+                </HStack>
               </HStack>
             </HStack>
             <Progress
@@ -191,6 +249,15 @@ export default function PracticeHistoryList({
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+      
+      {/* 編集モーダル */}
+      <PracticeEditModal
+        isOpen={isEditModalOpen}
+        onClose={onEditModalClose}
+        practice={editingPractice}
+        onSave={handleSaveEdit}
+        isLoading={isEditLoading}
+      />
     </Box>
   );
 }
