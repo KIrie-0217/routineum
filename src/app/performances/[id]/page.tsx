@@ -49,7 +49,16 @@ import TechniquePracticeForm from '@/components/practice/TechniquePracticeForm';
 import PracticeHistoryList from '@/components/practice/PracticeHistoryList';
 import PracticeContributionGraph from '@/components/practice/PracticeContributionGraph';
 import { PerformanceProgressChart, TechniqueProgressChart, WeeklyAverageGauge, TechniquesComparisonChart } from '@/components/charts';
-import { getPerformancePractices, getTechniquePractices, deletePerformancePractice, deleteTechniquePractice, getAllPerformancePractices, getAllTechniquePractices } from '@/services/practiceService';
+import { 
+  getPerformancePractices, 
+  getTechniquePractices, 
+  deletePerformancePractice, 
+  deleteTechniquePractice, 
+  updatePerformancePractice,
+  updateTechniquePractice,
+  getAllPerformancePractices, 
+  getAllTechniquePractices 
+} from '@/services/practiceService';
 
 type PerformanceDetailPageProps = { id: string }
 
@@ -287,6 +296,7 @@ export default function PerformanceDetailPage() {
         duration: 3000,
         isClosable: true,
       });
+      return true
     } catch (error) {
       console.error('練習記録の削除に失敗しました:', error);
       toast({
@@ -295,6 +305,30 @@ export default function PerformanceDetailPage() {
         duration: 3000,
         isClosable: true,
       });
+      return false
+    }
+  };
+  
+  // ルーチン練習記録の編集
+  const handleEditPerformancePractice = async (
+    practiceId: string, 
+    updates: { success_rate: number; notes: string | null }
+  ) => {
+    try {
+      await updatePerformancePractice(practiceId, updates, supabase);
+      // 練習記録を再取得
+      const result = await getPerformancePractices(params.id, performancePracticePage, 10, supabase);
+      setPerformancePractices(result.practices);
+      setPerformancePracticesTotalPages(result.totalPages);
+      
+      // 貢献グラフ用データも更新
+      const contributions = await getPerformanceContributions(params.id, 365, supabase);
+      setContributionData(contributions);
+      
+      return true;
+    } catch (error) {
+      console.error('練習記録の更新に失敗しました:', error);
+      throw error;
     }
   };
 
@@ -323,6 +357,33 @@ export default function PerformanceDetailPage() {
         duration: 3000,
         isClosable: true,
       });
+      return false
+    }
+    return true
+  };
+  
+  // シークエンス練習記録の編集
+  const handleEditTechniquePractice = async (
+    practiceId: string, 
+    updates: { success_rate: number; notes: string | null }
+  ) => {
+    try {
+      await updateTechniquePractice(practiceId, updates, supabase);
+      // シークエンス練習記録を再取得
+      if (selectedTechnique) {
+        const result = await getTechniquePractices(selectedTechnique.id, techniquePracticePage, 10, supabase);
+        setTechniquePractices(result.practices);
+        setTechniquePracticesTotalPages(result.totalPages);
+        
+        // 貢献グラフ用データも更新
+        const contributions = await getPerformanceContributions(params.id, 365, supabase);
+        setContributionData(contributions);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('シークエンス練習記録の更新に失敗しました:', error);
+      throw error;
     }
   };
 
@@ -525,6 +586,7 @@ export default function PerformanceDetailPage() {
                   isLoading={isPracticesLoading} 
                   title="ルーチン通し練習履歴"
                   onDelete={handleDeletePerformancePractice}
+                  onEdit={handleEditPerformancePractice}
                   currentPage={performancePracticePage}
                   totalPages={performancePracticesTotalPages}
                   onPageChange={handlePerformancePracticePageChange}
@@ -613,6 +675,7 @@ export default function PerformanceDetailPage() {
                       isLoading={isTechniquePracticesLoading} 
                       title="練習履歴"
                       onDelete={handleDeleteTechniquePractice}
+                      onEdit={handleEditTechniquePractice}
                       currentPage={techniquePracticePage}
                       totalPages={techniquePracticesTotalPages}
                       onPageChange={handleTechniquePracticePageChange}

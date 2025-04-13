@@ -6,6 +6,10 @@ type PerformancePractice =
   Database["public"]["Tables"]["performance_practices"]["Insert"];
 type TechniquePractice =
   Database["public"]["Tables"]["technique_practices"]["Insert"];
+type PerformancePracticeUpdate =
+  Database["public"]["Tables"]["performance_practices"]["Update"];
+type TechniquePracticeUpdate =
+  Database["public"]["Tables"]["technique_practices"]["Update"];
 
 // ルーチン練習記録の作成
 export async function createPerformancePractice(
@@ -173,4 +177,50 @@ export async function deleteTechniquePractice(
   }
 
   return true;
+}
+
+// ルーチン練習記録の更新
+export async function updatePerformancePractice(
+  practiceId: string,
+  updates: {
+    success_rate?: number;
+    notes?: string | null;
+  },
+  supabase: SupabaseClient<Database>
+) {
+  const { data, error } = await supabase
+    .from("performance_practices")
+    .update(updates)
+    .eq("id", practiceId)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+// シークエンス練習記録の更新
+export async function updateTechniquePractice(
+  practiceId: string,
+  updates: {
+    success_rate?: number;
+    notes?: string | null;
+  },
+  supabase: SupabaseClient<Database>
+) {
+  const { data, error } = await supabase
+    .from("technique_practices")
+    .update(updates)
+    .eq("id", practiceId)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
