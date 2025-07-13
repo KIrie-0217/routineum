@@ -37,6 +37,8 @@ import TechniquePracticeForm from './TechniquePracticeForm';
 import { formatDate } from '@/utils/dateUtils';
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getTechniqueById } from '@/services/techniqueService';
+import { Technique } from '@/types/models/technique';
 
 interface TechniquePracticeListProps {
   techniqueId: string;
@@ -47,6 +49,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
   const [practices, setPractices] = useState<TechniquePractice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<TechniquePractice | null>(null);
+  const [technique, setTechnique] = useState<Technique | null>(null);
   const { isOpen: isFormOpen, onOpen: onFormOpen, onClose: onFormClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const toast = useToast();
@@ -54,18 +57,22 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
   const supabase = useAuth().supabase;
 
   useEffect(() => {
-    loadPractices();
+    loadData();
   }, [techniqueId]);
 
-  const loadPractices = async () => {
+  const loadData = async () => {
     try {
       setIsLoading(true);
-      const data = await getTechniquePractices(techniqueId,supabase);
-      setPractices(data);
+      const [practicesData, techniqueData] = await Promise.all([
+        getTechniquePractices(techniqueId, supabase),
+        getTechniqueById(techniqueId, supabase)
+      ]);
+      setPractices(practicesData);
+      setTechnique(techniqueData);
     } catch (error) {
-      console.error('Failed to load practices:', error);
+      console.error('Failed to load data:', error);
       toast({
-        title: '練習記録の読み込みに失敗しました',
+        title: 'データの読み込みに失敗しました',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -88,7 +95,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
     if (!deleteTarget) return;
     
     try {
-      await deleteTechniquePractice(deleteTarget.id,supabase);
+      await deleteTechniquePractice(deleteTarget.id, supabase);
       setPractices(practices.filter(p => p.id !== deleteTarget.id));
       toast({
         title: '練習記録を削除しました',
@@ -111,7 +118,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
 
   const handleSubmit = async (data: NewTechniquePractice) => {
     try {
-      const created = await createTechniquePractice(data,supabase);
+      const created = await createTechniquePractice(data, supabase);
       setPractices([created, ...practices]);
       onFormClose();
     } catch (error) {
@@ -120,16 +127,32 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
   };
 
   const getSuccessRateBadge = (rate: number) => {
-    let colorScheme = 'red';
-    if (rate >= 80) colorScheme = 'green';
-    else if (rate >= 50) colorScheme = 'yellow';
-    else if (rate >= 30) colorScheme = 'orange';
-    
-    return (
-      <Badge colorScheme={colorScheme} fontSize="0.8em" px={2} py={1} borderRadius="full">
-        {rate}%
-      </Badge>
-    );
+    if (!technique) return null;
+
+    if (technique.unit === 'percent') {
+      let colorScheme = 'red';
+      if (rate >= 80) colorScheme = 'green';
+      else if (rate >= 50) colorScheme = 'yellow';
+      else if (rate >= 30) colorScheme = 'orange';
+      
+      return (
+        <Badge colorScheme={colorScheme} fontSize="0.8em" px={2} py={1} borderRadius="full">
+          {rate}%
+        </Badge>
+      );
+    } else {
+      // streakの場合
+      let colorScheme = 'blue';
+      if (rate >= 10) colorScheme = 'green';
+      else if (rate >= 5) colorScheme = 'teal';
+      else if (rate >= 3) colorScheme = 'blue';
+      
+      return (
+        <Badge colorScheme={colorScheme} fontSize="0.8em" px={2} py={1} borderRadius="full">
+          {rate}回
+        </Badge>
+      );
+    }
   };
 
   if (isLoading) {
@@ -156,7 +179,7 @@ export default function TechniquePracticeList({ techniqueId, techniqueName }: Te
           <Thead>
             <Tr>
               <Th>練習日</Th>
-              <Th>成功率</Th>
+              <Th>{technique?.unit === 'percent' ? '成功率' : '連続成功回数'}</Th>
               <Th>メモ</Th>
               <Th width="50px">操作</Th>
             </Tr>

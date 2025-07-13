@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Box,
@@ -17,9 +17,17 @@ import {
   SliderThumb,
   SliderMark,
   Tooltip,
-  useToast
+  useToast,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper
 } from '@chakra-ui/react';
 import { NewTechniquePractice } from '@/services/techniquePracticeService';
+import { Technique } from '@/types/models/technique';
+import { getTechniqueById } from '@/services/techniqueService';
+import { useSupabase } from '@/contexts/SupabaseContext';
 
 interface TechniquePracticeFormProps {
   techniqueId: string;
@@ -33,9 +41,34 @@ export default function TechniquePracticeForm({
   onCancel
 }: TechniquePracticeFormProps) {
   const [sliderValue, setSliderValue] = useState(50);
+  const [streakValue, setStreakValue] = useState(1);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [technique, setTechnique] = useState<Technique | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
+  const { supabase } = useSupabase();
+
+  useEffect(() => {
+    const loadTechnique = async () => {
+      try {
+        const techniqueData = await getTechniqueById(techniqueId, supabase);
+        setTechnique(techniqueData);
+      } catch (error) {
+        console.error('Error loading technique:', error);
+        toast({
+          title: 'シークエンスの読み込みに失敗しました',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadTechnique();
+  }, [techniqueId, supabase, toast]);
 
   const {
     register,
@@ -57,12 +90,18 @@ export default function TechniquePracticeForm({
     setValue('success_rate', value);
   };
 
+  // 連続成功回数の値が変更されたときにフォームの値も更新
+  const handleStreakChange = (valueAsString: string, valueAsNumber: number) => {
+    setStreakValue(valueAsNumber);
+    setValue('success_rate', valueAsNumber);
+  };
+
   const handleFormSubmit = async (data: NewTechniquePractice) => {
     try {
       setIsSubmitting(true);
       await onSubmit({
         ...data,
-        success_rate: sliderValue
+        success_rate: technique?.unit === 'percent' ? sliderValue : streakValue
       });
       toast({
         title: '練習記録を保存しました',
@@ -84,50 +123,74 @@ export default function TechniquePracticeForm({
     }
   };
 
+  if (isLoading) {
+    return <Box>読み込み中...</Box>;
+  }
+
   return (
     <Box as="form" onSubmit={handleSubmit(handleFormSubmit)} width="100%">
       <VStack spacing={4} align="flex-start">
-        <FormControl isInvalid={!!errors.success_rate} isRequired>
-          <FormLabel htmlFor="success_rate">成功率</FormLabel>
-          <Box pt={6} pb={2}>
-            <Slider
-              id="success_rate"
-              min={0}
-              max={100}
-              step={1}
-              value={sliderValue}
-              onChange={handleSliderChange}
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-            >
-              <SliderMark value={0} mt={2} ml={-2} fontSize="sm">
-                0%
-              </SliderMark>
-              <SliderMark value={50} mt={2} ml={-2} fontSize="sm">
-                50%
-              </SliderMark>
-              <SliderMark value={100} mt={2} ml={-2} fontSize="sm">
-                100%
-              </SliderMark>
-              <SliderTrack>
-                <SliderFilledTrack />
-              </SliderTrack>
-              <Tooltip
-                hasArrow
-                bg="blue.500"
-                color="white"
-                placement="top"
-                isOpen={showTooltip}
-                label={`${sliderValue}%`}
+        {technique?.unit === 'percent' ? (
+          <FormControl isInvalid={!!errors.success_rate} isRequired>
+            <FormLabel htmlFor="success_rate">成功率</FormLabel>
+            <Box pt={6} pb={2}>
+              <Slider
+                id="success_rate"
+                min={0}
+                max={100}
+                step={1}
+                value={sliderValue}
+                onChange={handleSliderChange}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
               >
-                <SliderThumb />
-              </Tooltip>
-            </Slider>
-          </Box>
-          <FormErrorMessage>
-            {errors.success_rate && errors.success_rate.message}
-          </FormErrorMessage>
-        </FormControl>
+                <SliderMark value={0} mt={2} ml={-2} fontSize="sm">
+                  0%
+                </SliderMark>
+                <SliderMark value={50} mt={2} ml={-2} fontSize="sm">
+                  50%
+                </SliderMark>
+                <SliderMark value={100} mt={2} ml={-2} fontSize="sm">
+                  100%
+                </SliderMark>
+                <SliderTrack>
+                  <SliderFilledTrack />
+                </SliderTrack>
+                <Tooltip
+                  hasArrow
+                  bg="blue.500"
+                  color="white"
+                  placement="top"
+                  isOpen={showTooltip}
+                  label={`${sliderValue}%`}
+                >
+                  <SliderThumb />
+                </Tooltip>
+              </Slider>
+            </Box>
+            <FormErrorMessage>
+              {errors.success_rate && errors.success_rate.message}
+            </FormErrorMessage>
+          </FormControl>
+        ) : (
+          <FormControl isInvalid={!!errors.success_rate} isRequired>
+            <FormLabel htmlFor="success_rate">連続成功回数</FormLabel>
+            <NumberInput 
+              min={0} 
+              value={streakValue} 
+              onChange={handleStreakChange}
+            >
+              <NumberInputField id="success_rate" />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+            <FormErrorMessage>
+              {errors.success_rate && errors.success_rate.message}
+            </FormErrorMessage>
+          </FormControl>
+        )}
 
         <FormControl isInvalid={!!errors.practice_date} isRequired>
           <FormLabel htmlFor="practice_date">練習日</FormLabel>
