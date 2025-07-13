@@ -416,27 +416,33 @@ export default function DashboardSummaryChart({
     );
   }
 
-  // データがない場合
-  if (
+  // データがない場合でも期間指定プルダウンは表示する
+  const noDataAvailable = (
     !practiceCountData.labels?.length || 
     !successRateData.labels?.length || 
     !performanceStatusData.labels?.length
-  ) {
-    return (
-      <Box h="300px" display="flex" alignItems="center" justifyContent="center">
-        <Text color="gray.500">まだデータがありません</Text>
-      </Box>
-    );
-  }
+  );
 
   return (
     <SimpleGrid columns={{ base: 1, md: 2, lg: 2 }} spacing={6}>
       <Box h="300px" p={4} borderWidth="1px" borderRadius="md">
-        <Bar options={practiceCountOptions} data={practiceCountData} />
+        {noDataAvailable ? (
+          <Center h="100%">
+            <Text color="gray.500">まだデータがありません</Text>
+          </Center>
+        ) : (
+          <Bar options={practiceCountOptions} data={practiceCountData} />
+        )}
       </Box>
       
       <Box h="300px" p={4} borderWidth="1px" borderRadius="md">
-        <Line options={successRateOptions} data={successRateData} />
+        {noDataAvailable ? (
+          <Center h="100%">
+            <Text color="gray.500">まだデータがありません</Text>
+          </Center>
+        ) : (
+          <Line options={successRateOptions} data={successRateData} />
+        )}
       </Box>
        
     </SimpleGrid>
