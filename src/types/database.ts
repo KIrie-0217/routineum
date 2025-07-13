@@ -91,6 +91,7 @@ export interface Database {
           performance_id: string;
           name: string;
           notes: string | null;
+          unit: string;
           created_at: string;
           updated_at: string;
         };
@@ -99,6 +100,7 @@ export interface Database {
           performance_id: string;
           name: string;
           notes?: string | null;
+          unit?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -107,6 +109,7 @@ export interface Database {
           performance_id?: string;
           name?: string;
           notes?: string | null;
+          unit?: string;
           created_at?: string;
           updated_at?: string;
         };

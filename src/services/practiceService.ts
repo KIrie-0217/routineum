@@ -20,7 +20,7 @@ export async function createPerformancePractice(
     .from("performance_practices")
     .insert({
       ...practice,
-      practice_date: practice.practice_date || new Date().toISOString(),
+      practice_date: practice.practice_date || new Date().toISOString(), // 現在時刻をISO形式で記録
     })
     .select()
     .single();
@@ -41,7 +41,7 @@ export async function createTechniquePractice(
     .from("technique_practices")
     .insert({
       ...practice,
-      practice_date: practice.practice_date || new Date().toISOString(),
+      practice_date: practice.practice_date || new Date().toISOString(), // 現在時刻をISO形式で記録
     })
     .select()
     .single();
