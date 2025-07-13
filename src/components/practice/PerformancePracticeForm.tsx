@@ -19,6 +19,8 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { createPerformancePractice } from '@/services/practiceService';
 import { getSupabaseClient } from '@/lib/supabase/client';
 
@@ -94,10 +96,20 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
             name="practice_date"
             control={control}
             render={({ field }) => (
-              <Input
-                type="datetime-local"
-                {...field}
-              />
+              <Box className="date-picker-container" width="100%">
+                <DatePicker
+                  selected={field.value ? new Date(field.value) : null}
+                  onChange={(date: Date | null) => {
+                    field.onChange(date ? date.toISOString().slice(0, 16) : '');
+                  }}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="yyyy/MM/dd HH:mm"
+                  customInput={<Input />}
+                  className="chakra-input"
+                />
+              </Box>
             )}
           />
           {errors.practice_date && (

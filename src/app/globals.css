@@ -40,3 +40,73 @@ a {
     color-scheme: dark;
   }
 }
+
+/* DatePicker カスタムスタイル */
+.date-picker-container {
+  width: 100%;
+}
+
+.date-picker-container .react-datepicker-wrapper {
+  width: 100%;
+}
+
+.date-picker-container .react-datepicker__input-container {
+  width: 100%;
+}
+
+.date-picker-container input {
+  width: 100%;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+  .react-datepicker {
+    background-color: #2D3748;
+    color: #FFFFFF;
+    border-color: #4A5568;
+  }
+  
+  .react-datepicker__header {
+    background-color: #1A202C;
+    border-bottom-color: #4A5568;
+  }
+  
+  .react-datepicker__current-month,
+  .react-datepicker__day-name,
+  .react-datepicker-time__header {
+    color: #FFFFFF;
+  }
+  
+  .react-datepicker__day {
+    color: #E2E8F0;
+  }
+  
+  .react-datepicker__day:hover {
+    background-color: #4A5568;
+  }
+  
+  .react-datepicker__day--selected,
+  .react-datepicker__day--keyboard-selected {
+    background-color: #3182CE;
+    color: #FFFFFF;
+  }
+  
+  .react-datepicker__time-container,
+  .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+    background-color: #2D3748;
+    border-color: #4A5568;
+  }
+  
+  .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
+    color: #E2E8F0;
+  }
+  
+  .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item:hover {
+    background-color: #4A5568;
+  }
+  
+  .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+    background-color: #3182CE;
+    color: #FFFFFF;
+  }
+}
