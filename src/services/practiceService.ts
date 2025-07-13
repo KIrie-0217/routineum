@@ -34,14 +34,14 @@ export async function createPerformancePractice(
 
 // シークエンス練習記録の作成
 export async function createTechniquePractice(
-  practice: Omit<TechniquePractice, "id" | "created_at" | "practice_date">,
+  practice: Omit<TechniquePractice, "id" | "created_at" | "practice_date"> & { practice_date?: string },
   supabase: SupabaseClient<Database>
 ) {
   const { data, error } = await supabase
     .from("technique_practices")
     .insert({
       ...practice,
-      practice_date: new Date().toISOString(),
+      practice_date: practice.practice_date || new Date().toISOString(),
     })
     .select()
     .single();

@@ -15,6 +15,7 @@ import {
   FormErrorMessage,
   useToast,
   HStack,
+  Input,
 } from '@chakra-ui/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,6 +28,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const practiceSchema = z.object({
   success_rate: z.number().min(0).max(100),
   notes: z.string().optional(),
+  practice_date: z.string().min(1, '練習日は必須です'),
 });
 
 type PracticeFormData = z.infer<typeof practiceSchema>;
@@ -62,6 +64,7 @@ export default function TechniquePracticeForm({
     defaultValues: {
       success_rate: 50,
       notes: '',
+      practice_date: new Date().toISOString().split('T')[0], // 今日の日付をデフォルト値に設定
     },
   });
 
@@ -72,6 +75,7 @@ export default function TechniquePracticeForm({
         technique_id: techniqueId,
         success_rate: data.success_rate,
         notes: data.notes || null,
+        practice_date: data.practice_date, // 選択された日付を使用
       },supabase);
       
       reset();
@@ -146,6 +150,23 @@ export default function TechniquePracticeForm({
           />
           {errors.success_rate && (
             <FormErrorMessage>{errors.success_rate.message}</FormErrorMessage>
+          )}
+        </FormControl>
+
+        <FormControl isInvalid={!!errors.practice_date}>
+          <FormLabel>練習日</FormLabel>
+          <Controller
+            name="practice_date"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="date"
+                {...field}
+              />
+            )}
+          />
+          {errors.practice_date && (
+            <FormErrorMessage>{errors.practice_date.message}</FormErrorMessage>
           )}
         </FormControl>
 
