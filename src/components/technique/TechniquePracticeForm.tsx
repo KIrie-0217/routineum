@@ -110,7 +110,7 @@ export default function TechniquePracticeForm({
     defaultValues: {
       technique_id: techniqueId,
       success_rate: 50,
-      practice_date: new Date().toISOString().split('T')[0],
+      practice_date: new Date().toISOString().slice(0, 16), // Format: YYYY-MM-DDTHH:MM
       notes: ''
     }
   });
@@ -264,13 +264,13 @@ export default function TechniquePracticeForm({
         )}
 
         <FormControl isInvalid={!!errors.practice_date} isRequired>
-          <FormLabel>練習日</FormLabel>
+          <FormLabel>練習日時</FormLabel>
           <Controller
             name="practice_date"
             control={control}
             render={({ field }) => (
               <Input
-                type="date"
+                type="datetime-local"
                 {...field}
               />
             )}
