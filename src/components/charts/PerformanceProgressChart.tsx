@@ -306,30 +306,62 @@ export default function PerformanceProgressChart({
 
   if (chartData.labels?.length === 0) {
     return (
-      <Box 
-        h={{ base: "200px", md: "300px" }} 
-        display="flex" 
-        alignItems="center" 
-        justifyContent="center"
-        width="100%"
-      >
-        <Text color="gray.500" fontSize={{ base: "sm", md: "md" }}>まだ練習記録がありません</Text>
+      <Box width="100%">
+        <HStack justifyContent="space-between" mb={4} flexWrap="wrap">
+          {title && <Heading size="md" fontSize={{ base: "sm", md: "md" }}>{title}</Heading>}
+          <Select 
+            value={timeRange} 
+            onChange={handleTimeRangeChange} 
+            width={{ base: "120px", md: "150px" }} 
+            size="sm"
+            ml={{ base: "auto", md: 0 }}
+          >
+            <option value="all">全期間</option>
+            <option value="month">過去1ヶ月</option>
+            <option value="week">過去1週間</option>
+          </Select>
+        </HStack>
+        <Box 
+          h={{ base: "200px", md: "300px" }} 
+          display="flex" 
+          alignItems="center" 
+          justifyContent="center"
+          width="100%"
+        >
+          <Text color="gray.500" fontSize={{ base: "sm", md: "md" }}>まだ練習記録がありません</Text>
+        </Box>
       </Box>
     );
   }
 
   if (chartData.labels?.length === 1) {
     return (
-      <Box 
-        h={{ base: "200px", md: "300px" }} 
-        display="flex" 
-        alignItems="center" 
-        justifyContent="center" 
-        flexDirection="column"
-        width="100%"
-      >
-        <Text color="gray.500" mb={2} fontSize={{ base: "sm", md: "md" }}>グラフを表示するには2つ以上の記録が必要です</Text>
-        <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }}>最新の成功率: {getLatestValue()}%</Text>
+      <Box width="100%">
+        <HStack justifyContent="space-between" mb={4} flexWrap="wrap">
+          {title && <Heading size="md" fontSize={{ base: "sm", md: "md" }}>{title}</Heading>}
+          <Select 
+            value={timeRange} 
+            onChange={handleTimeRangeChange} 
+            width={{ base: "120px", md: "150px" }} 
+            size="sm"
+            ml={{ base: "auto", md: 0 }}
+          >
+            <option value="all">全期間</option>
+            <option value="month">過去1ヶ月</option>
+            <option value="week">過去1週間</option>
+          </Select>
+        </HStack>
+        <Box 
+          h={{ base: "200px", md: "300px" }} 
+          display="flex" 
+          alignItems="center" 
+          justifyContent="center" 
+          flexDirection="column"
+          width="100%"
+        >
+          <Text color="gray.500" mb={2} fontSize={{ base: "sm", md: "md" }}>グラフを表示するには2つ以上の記録が必要です</Text>
+          <Text fontWeight="bold" fontSize={{ base: "md", md: "lg" }}>最新の成功率: {getLatestValue()}%</Text>
+        </Box>
       </Box>
     );
   }
