@@ -30,6 +30,7 @@ interface PracticeEditModalProps {
   } | null;
   onSave: (id: string, updates: { success_rate: number; notes: string | null }) => Promise<void>;
   isLoading: boolean;
+  unit?: string; // 単位（percent または streak）
 }
 
 export default function PracticeEditModal({
@@ -37,7 +38,8 @@ export default function PracticeEditModal({
   onClose,
   practice,
   onSave,
-  isLoading
+  isLoading,
+  unit = 'percent' // デフォルトはpercent
 }: PracticeEditModalProps) {
   const [successRate, setSuccessRate] = useState(practice?.success_rate || 0);
   const [notes, setNotes] = useState(practice?.notes || '');
@@ -66,15 +68,15 @@ export default function PracticeEditModal({
         <ModalCloseButton />
         <ModalBody pb={6}>
           <FormControl mb={4}>
-            <FormLabel>成功率</FormLabel>
+            <FormLabel>{unit === 'percent' ? '成功率' : '連続成功回数'}</FormLabel>
             <HStack spacing={4}>
               <Box flex="1">
                 <Slider
                   value={successRate}
                   onChange={setSuccessRate}
                   min={0}
-                  max={100}
-                  step={5}
+                  max={unit === 'percent' ? 100 : 20}
+                  step={unit === 'percent' ? 5 : 1}
                 >
                   <SliderTrack>
                     <SliderFilledTrack />
@@ -82,7 +84,7 @@ export default function PracticeEditModal({
                   <SliderThumb />
                 </Slider>
               </Box>
-              <Text width="40px" textAlign="right">{successRate}%</Text>
+              <Text width="40px" textAlign="right">{successRate}{unit === 'percent' ? '%' : '回'}</Text>
             </HStack>
           </FormControl>
           <FormControl>
