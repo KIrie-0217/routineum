@@ -27,7 +27,7 @@ import {
 import { NewTechniquePractice } from '@/services/techniquePracticeService';
 import { Technique } from '@/types/models/technique';
 import { getTechniqueById } from '@/services/techniqueService';
-import { useSupabase } from '@/contexts/SupabaseContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TechniquePracticeFormProps {
   techniqueId: string;
@@ -47,7 +47,7 @@ export default function TechniquePracticeForm({
   const [technique, setTechnique] = useState<Technique | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
-  const { supabase } = useSupabase();
+  const { supabase } = useAuth();
 
   useEffect(() => {
     const loadTechnique = async () => {
