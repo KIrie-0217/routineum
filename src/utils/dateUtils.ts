@@ -23,6 +23,18 @@ export function dateToLocalISOString(date: Date): string {
 }
 
 /**
+ * Converts a local date string to UTC ISO string for database storage
+ * @param localDateString Local date string (YYYY-MM-DDTHH:MM)
+ * @returns ISO string in UTC format
+ */
+export function localDateStringToUTCISOString(localDateString: string): string {
+  // Parse the local date string to a Date object
+  const date = new Date(localDateString);
+  // Convert to UTC ISO string
+  return date.toISOString();
+}
+
+/**
  * Converts an ISO string to a Date object, preserving the local timezone
  * @param isoString ISO string in local timezone
  * @returns Date object

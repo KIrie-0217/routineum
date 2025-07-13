@@ -23,7 +23,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { createPerformancePractice } from '@/services/practiceService';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import { dateToLocalISOString } from '@/utils/dateUtils';
+import { dateToLocalISOString, localDateStringToUTCISOString } from '@/utils/dateUtils';
 
 // バリデーションスキーマ
 const practiceSchema = z.object({
@@ -69,7 +69,7 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
       await createPerformancePractice({
         performance_id: performanceId,
         success_rate: data.success_rate,
-        practice_date: data.practice_date,
+        practice_date: localDateStringToUTCISOString(data.practice_date), // ローカル時間をUTCに変換
         notes: data.notes || null,
       },supabase);
       

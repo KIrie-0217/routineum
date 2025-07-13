@@ -35,7 +35,7 @@ import { getTechniqueById } from '@/services/techniqueService';
 import { useAuth } from '@/contexts/AuthContext';
 import { createTechniquePractice as createTechniquePracticeService } from '@/services/techniquePracticeService';
 
-import { dateToLocalISOString } from '@/utils/dateUtils';
+import { dateToLocalISOString, localDateStringToUTCISOString } from '@/utils/dateUtils';
 
 // バリデーションスキーマ
 const practiceSchema = z.object({
@@ -137,7 +137,7 @@ export default function TechniquePracticeForm({
         technique_id: techniqueId,
         success_rate: technique?.unit === 'percent' ? sliderValue : streakValue,
         notes: data.notes || null,
-        practice_date: data.practice_date
+        practice_date: localDateStringToUTCISOString(data.practice_date) // ローカル時間をUTCに変換
       };
 
       if (propOnSubmit) {
