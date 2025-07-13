@@ -164,12 +164,21 @@ export default function TechniqueList({ performanceId, onTechniqueClick }: Techn
   };
 
   // 成功率に基づいて色を決定する関数
-  const getSuccessRateColor = (rate: number | null) => {
+  const getSuccessRateColor = (rate: number | null, technique: Technique) => {
     if (rate === null) return 'gray.500';
-    if (rate >= 90) return 'green.500';
-    if (rate >= 70) return 'blue.500';
-    if (rate >= 50) return 'yellow.500';
-    return 'red.500';
+    
+    if (technique.unit === 'percent') {
+      if (rate >= 90) return 'green.500';
+      if (rate >= 70) return 'blue.500';
+      if (rate >= 50) return 'yellow.500';
+      return 'red.500';
+    } else {
+      // streak unit
+      if (rate >= 10) return 'green.500';
+      if (rate >= 5) return 'blue.500';
+      if (rate >= 3) return 'yellow.500';
+      return 'red.500';
+    }
   };
 
   if (isLoading) {
@@ -203,15 +212,17 @@ export default function TechniqueList({ performanceId, onTechniqueClick }: Techn
                   <Heading size="sm" wordBreak="break-word">{technique.name}</Heading>
                   {!isRatesLoading && techniqueRates[technique.id] !== null && (
                     <Badge 
-                      colorScheme={getSuccessRateColor(techniqueRates[technique.id]) === 'gray.500' ? 'gray' : 
-                                  getSuccessRateColor(techniqueRates[technique.id]) === 'green.500' ? 'green' :
-                                  getSuccessRateColor(techniqueRates[technique.id]) === 'blue.500' ? 'blue' :
-                                  getSuccessRateColor(techniqueRates[technique.id]) === 'yellow.500' ? 'yellow' : 'red'}
+                      colorScheme={getSuccessRateColor(techniqueRates[technique.id], technique) === 'gray.500' ? 'gray' : 
+                                  getSuccessRateColor(techniqueRates[technique.id], technique) === 'green.500' ? 'green' :
+                                  getSuccessRateColor(techniqueRates[technique.id], technique) === 'blue.500' ? 'blue' :
+                                  getSuccessRateColor(techniqueRates[technique.id], technique) === 'yellow.500' ? 'yellow' : 'red'}
                       fontSize="sm"
                       ml={1}
                       flexShrink={0}
                     >
-                      平均{techniqueRates[technique.id]}%
+                      {technique.unit === 'percent' 
+                        ? `平均${techniqueRates[technique.id]}%` 
+                        : `平均${techniqueRates[technique.id]}回`}
                     </Badge>
                   )}
                 </Flex>

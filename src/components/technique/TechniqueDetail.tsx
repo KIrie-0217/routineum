@@ -91,11 +91,13 @@ export default function TechniqueDetail({ techniqueId }: TechniqueDetailProps) {
         const labels = sortedPractices.map(p => formatDate(p.practice_date));
         const data = sortedPractices.map(p => p.success_rate);
         
+        const isPercentUnit = techniqueData.unit === 'percent';
+        
         setChartData({
           labels,
           datasets: [
             {
-              label: '成功率 (%)',
+              label: isPercentUnit ? '成功率 (%)' : '連続成功回数',
               data,
               borderColor: 'rgb(53, 162, 235)',
               backgroundColor: 'rgba(53, 162, 235, 0.5)',
@@ -144,8 +146,14 @@ export default function TechniqueDetail({ techniqueId }: TechniqueDetailProps) {
       <Card mb={6}>
         <CardBody>
           <Stat>
-            <StatLabel>最新の成功率</StatLabel>
-            <StatNumber>{latestRate !== null ? `${latestRate}%` : '記録なし'}</StatNumber>
+            <StatLabel>{technique.unit === 'percent' ? '最新の成功率' : '最新の連続成功回数'}</StatLabel>
+            <StatNumber>
+              {latestRate !== null 
+                ? technique.unit === 'percent' 
+                  ? `${latestRate}%` 
+                  : `${latestRate}回`
+                : '記録なし'}
+            </StatNumber>
             <StatHelpText>最後の練習記録から</StatHelpText>
           </Stat>
         </CardBody>
@@ -155,7 +163,7 @@ export default function TechniqueDetail({ techniqueId }: TechniqueDetailProps) {
       
       <Tabs variant="enclosed" colorScheme="blue">
         <TabList>
-          <Tab>成功率の推移</Tab>
+          <Tab>{technique.unit === 'percent' ? '成功率の推移' : '連続成功回数の推移'}</Tab>
           <Tab>練習記録</Tab>
         </TabList>
         
@@ -171,10 +179,10 @@ export default function TechniqueDetail({ techniqueId }: TechniqueDetailProps) {
                     scales: {
                       y: {
                         min: 0,
-                        max: 100,
+                        max: technique?.unit === 'percent' ? 100 : undefined,
                         title: {
                           display: true,
-                          text: '成功率 (%)'
+                          text: technique?.unit === 'percent' ? '成功率 (%)' : '連続成功回数'
                         }
                       }
                     },
@@ -184,7 +192,7 @@ export default function TechniqueDetail({ techniqueId }: TechniqueDetailProps) {
                       },
                       title: {
                         display: true,
-                        text: '成功率の推移'
+                        text: technique?.unit === 'percent' ? '成功率の推移' : '連続成功回数の推移'
                       }
                     }
                   }}
