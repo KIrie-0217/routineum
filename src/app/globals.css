@@ -58,6 +58,103 @@ a {
   width: 100%;
 }
 
+/* モバイル表示用のカスタムクラス */
+.mobile-date-picker .react-datepicker-popper {
+  width: 280px !important;
+}
+
+.mobile-date-picker .react-datepicker__month-container,
+.mobile-date-picker .react-datepicker__time-container {
+  width: 100% !important;
+  max-width: 280px !important;
+}
+
+.mobile-date-picker .react-datepicker__time-container {
+  border-left: none !important;
+  border-top: 1px solid #aeaeae !important;
+  margin-top: 5px !important;
+}
+
+.mobile-date-picker .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+  width: 100% !important;
+  max-width: 280px !important;
+}
+
+/* モバイル向け DatePicker スタイル修正 */
+@media (max-width: 768px) {
+  .react-datepicker {
+    font-size: 0.8rem;
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .react-datepicker__month-container {
+    width: 100%;
+  }
+  
+  .react-datepicker__day {
+    width: 1.7rem;
+    line-height: 1.7rem;
+    margin: 0.1rem;
+  }
+  
+  .react-datepicker__day-name {
+    width: 1.7rem;
+    line-height: 1.7rem;
+    margin: 0.1rem;
+  }
+  
+  .react-datepicker__current-month {
+    font-size: 0.9rem;
+  }
+  
+  .react-datepicker__header {
+    padding-top: 6px;
+  }
+  
+  .react-datepicker__navigation {
+    top: 6px;
+  }
+  
+  /* タイムピッカーのモバイル対応 - 横並びレイアウト */
+  .react-datepicker__time-container {
+    width: 100%;
+    max-width: 280px;
+    border-left: none;
+    border-top: 1px solid #aeaeae;
+    margin-top: 5px;
+  }
+  
+  .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  /* ポッパーの位置調整 */
+  .react-datepicker-popper {
+    width: 280px;
+    z-index: 9999 !important;
+  }
+  
+  /* スクロールバーのスタイル調整 */
+  .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list {
+    height: 150px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
+    padding: 5px 10px;
+    height: auto;
+    font-size: 0.8rem;
+  }
+  
+  /* 日付と時間を一段で表示するための調整 */
+  .react-datepicker--time-only .react-datepicker__time-container {
+    border-top: none;
+  }
+}
+
 /* ダークモード対応 */
 @media (prefers-color-scheme: dark) {
   .react-datepicker {
