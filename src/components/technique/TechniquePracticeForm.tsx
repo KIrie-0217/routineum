@@ -35,6 +35,8 @@ import { getTechniqueById } from '@/services/techniqueService';
 import { useAuth } from '@/contexts/AuthContext';
 import { createTechniquePractice as createTechniquePracticeService } from '@/services/techniquePracticeService';
 
+import { dateToLocalISOString } from '@/utils/dateUtils';
+
 // バリデーションスキーマ
 const practiceSchema = z.object({
   technique_id: z.string().min(1, 'テクニックIDは必須です'),
@@ -112,7 +114,7 @@ export default function TechniquePracticeForm({
     defaultValues: {
       technique_id: techniqueId,
       success_rate: 50,
-      practice_date: new Date().toISOString().slice(0, 16), // Format: YYYY-MM-DDTHH:MM
+      practice_date: new Date().toISOString().slice(0, 16), // Format: YYYY-MM-DDTHH:MM (will be converted to local timezone when displayed)
       notes: ''
     }
   });
@@ -275,7 +277,7 @@ export default function TechniquePracticeForm({
                 <DatePicker
                   selected={field.value ? new Date(field.value) : null}
                   onChange={(date: Date | null) => {
-                    field.onChange(date ? date.toISOString().slice(0, 16) : '');
+                    field.onChange(date ? dateToLocalISOString(date) : '');
                   }}
                   showTimeSelect
                   timeFormat="HH:mm"
