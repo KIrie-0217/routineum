@@ -22,14 +22,16 @@ ChartJS.register(
 
 interface WeeklyAverageGaugeProps {
   title?: string;
-  fetchPractices: () => Promise<{ success_rate: number; practice_date: string }[]>;
+  fetchPractices: () => Promise<{ success_rate: number; practice_date: string; unit?: string }[]>;
   colorScheme?: 'blue' | 'green' | 'orange' | 'purple';
+  unit?: string; // 単位（percent または streak）
 }
 
 export default function WeeklyAverageGauge({
   title = '直近1週間の平均成功率',
   fetchPractices,
-  colorScheme = 'blue'
+  colorScheme = 'blue',
+  unit = 'percent' // デフォルトはpercent
 }: WeeklyAverageGaugeProps) {
   const [average, setAverage] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +121,16 @@ export default function WeeklyAverageGauge({
         
         // 平均成功率を計算
         const sum = recentPractices.reduce((acc, practice) => acc + practice.success_rate, 0);
-        const avg = Math.round(sum / recentPractices.length);
+        
+        // unit が streak の場合は、最大値を計算する
+        let avg;
+        if (unit === 'streak') {
+          // 連続成功回数の場合は、最大値を表示
+          avg = Math.max(...recentPractices.map(practice => practice.success_rate));
+        } else {
+          // 成功率の場合は、平均値を計算
+          avg = Math.round(sum / recentPractices.length);
+        }
         
         setAverage(avg);
         setPracticeCount(recentPractices.length);
@@ -132,7 +143,7 @@ export default function WeeklyAverageGauge({
     }
 
     calculateWeeklyAverage();
-  }, [fetchPractices]);
+  }, [fetchPractices, unit]);
 
   // 半円形ゲージのデータ
   const getChartData = (): ChartData<'doughnut'> => {
@@ -150,11 +161,15 @@ export default function WeeklyAverageGauge({
       };
     }
     
+    // unit が streak の場合は、最大値を調整する
+    const maxValue = unit === 'percent' ? 100 : Math.max(20, average * 1.5);
+    const remainingValue = unit === 'percent' ? 100 - average : maxValue - average;
+    
     return {
-      labels: ['成功率', '残り'],
+      labels: [unit === 'percent' ? '成功率' : '連続成功回数', '残り'],
       datasets: [
         {
-          data: [average, 100 - average],
+          data: [average, remainingValue],
           backgroundColor: [colors.main, colors.background],
           borderColor: [colors.main, 'transparent'],
           borderWidth: 1,
@@ -230,7 +245,7 @@ export default function WeeklyAverageGauge({
           {average !== null ? (
             <>
               <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color={textColor}>
-                {average}%
+                {average}{unit === 'percent' ? '%' : '回'}
               </Text>
               <Text fontSize="xs" color="gray.500">
                 {practiceCount}回の練習

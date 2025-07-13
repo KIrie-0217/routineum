@@ -550,6 +550,7 @@ export default function PerformanceDetailPage() {
                         title="直近1週間のルーチン平均成功率"
                         colorScheme="blue"
                         fetchPractices={() => getAllPerformancePractices(params.id,supabase)}
+                        unit="percent"
                       /> 
                     </Box>
                   </GridItem>
@@ -663,6 +664,7 @@ export default function PerformanceDetailPage() {
                               title={`${selectedTechnique.name}の週間平均`}
                               colorScheme="green"
                               fetchPractices={() => getAllTechniquePractices(selectedTechnique.id,supabase)}
+                              unit={selectedTechnique.unit || 'percent'}
                             />
                           </Box>
                         </VStack>

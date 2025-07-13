@@ -19,6 +19,7 @@ import {
   HStack
 } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 
 interface PracticeEditModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface PracticeEditModalProps {
     id: string;
     success_rate: number;
     notes: string | null;
+    practice_date?: string;
   } | null;
   onSave: (id: string, updates: { success_rate: number; notes: string | null }) => Promise<void>;
   isLoading: boolean;
@@ -43,6 +45,11 @@ export default function PracticeEditModal({
 }: PracticeEditModalProps) {
   const [successRate, setSuccessRate] = useState(practice?.success_rate || 0);
   const [notes, setNotes] = useState(practice?.notes || '');
+  
+  // 日付のフォーマット
+  const formattedDate = practice?.practice_date 
+    ? format(new Date(practice.practice_date), 'yyyy-MM-dd HH:mm')
+    : '';
 
   // モーダルが開かれるたびに初期値を設定
   useEffect(() => {
@@ -67,6 +74,12 @@ export default function PracticeEditModal({
         <ModalHeader>練習記録の編集</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
+          {practice?.practice_date && (
+            <Box mb={4}>
+              <Text fontWeight="bold">練習日時:</Text>
+              <Text>{formattedDate}</Text>
+            </Box>
+          )}
           <FormControl mb={4}>
             <FormLabel>{unit === 'percent' ? '成功率' : '連続成功回数'}</FormLabel>
             <HStack spacing={4}>
