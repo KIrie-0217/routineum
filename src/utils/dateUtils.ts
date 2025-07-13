@@ -11,14 +11,15 @@ import { ja } from 'date-fns/locale';
  * @returns ISO string (YYYY-MM-DDTHH:MM) in local timezone
  */
 export function dateToLocalISOString(date: Date): string {
-  // Get local timezone offset in minutes
-  const tzOffset = date.getTimezoneOffset() * 60000; // convert to milliseconds
+  // Format the date directly to ISO format string using local timezone
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
   
-  // Adjust the date by the timezone offset
-  const localDate = new Date(date.getTime() - tzOffset);
-  
-  // Return the ISO string but truncate to minutes (YYYY-MM-DDTHH:MM)
-  return localDate.toISOString().slice(0, 16);
+  // Return the ISO string in local timezone (YYYY-MM-DDTHH:MM)
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 /**

@@ -58,7 +58,7 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
     resolver: zodResolver(practiceSchema),
     defaultValues: {
       success_rate: 50,
-      practice_date: new Date().toISOString().slice(0, 16), // Format: YYYY-MM-DDTHH:MM (will be converted to local timezone when displayed)
+      practice_date: dateToLocalISOString(new Date()), // ローカルタイムゾーンでのISO文字列
       notes: '',
     },
   });
