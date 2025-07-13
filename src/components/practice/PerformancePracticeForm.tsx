@@ -14,6 +14,7 @@ import {
   FormErrorMessage,
   useToast,
   HStack,
+  Input,
 } from '@chakra-ui/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +25,7 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 // バリデーションスキーマ
 const practiceSchema = z.object({
   success_rate: z.number().min(0).max(100),
+  practice_date: z.string().min(1, '練習日は必須です'),
   notes: z.string().optional(),
 });
 
@@ -53,6 +55,7 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
     resolver: zodResolver(practiceSchema),
     defaultValues: {
       success_rate: 50,
+      practice_date: new Date().toISOString().split('T')[0],
       notes: '',
     },
   });
@@ -63,6 +66,7 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
       await createPerformancePractice({
         performance_id: performanceId,
         success_rate: data.success_rate,
+        practice_date: data.practice_date,
         notes: data.notes || null,
       },supabase);
       
@@ -84,6 +88,23 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
   return (
     <Box as="form" onSubmit={handleSubmit(onSubmit)} width="100%">
       <VStack spacing={4} align="stretch">
+        <FormControl isInvalid={!!errors.practice_date} isRequired>
+          <FormLabel>練習日</FormLabel>
+          <Controller
+            name="practice_date"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="date"
+                {...field}
+              />
+            )}
+          />
+          {errors.practice_date && (
+            <FormErrorMessage>{errors.practice_date.message}</FormErrorMessage>
+          )}
+        </FormControl>
+
         <FormControl isInvalid={!!errors.success_rate}>
           <FormLabel>成功率 (%)</FormLabel>
           <Controller
