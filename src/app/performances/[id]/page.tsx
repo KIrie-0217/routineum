@@ -682,6 +682,7 @@ export default function PerformanceDetailPage() {
                       currentPage={techniquePracticePage}
                       totalPages={techniquePracticesTotalPages}
                       onPageChange={handleTechniquePracticePageChange}
+                      unit={selectedTechnique?.unit || 'percent'}
                     />
                   </TabPanel>
                 </TabPanels>
