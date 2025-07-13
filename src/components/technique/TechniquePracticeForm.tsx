@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Box,
   Button,
@@ -22,22 +24,46 @@ import {
   NumberInputField,
   NumberInputStepper,
   NumberIncrementStepper,
-  NumberDecrementStepper
+  NumberDecrementStepper,
+  Text,
+  HStack
 } from '@chakra-ui/react';
-import { NewTechniquePractice } from '@/services/techniquePracticeService';
 import { Technique } from '@/types/models/technique';
 import { getTechniqueById } from '@/services/techniqueService';
 import { useAuth } from '@/contexts/AuthContext';
+import { createTechniquePractice as createTechniquePracticeService } from '@/services/techniquePracticeService';
+
+// バリデーションスキーマ
+const practiceSchema = z.object({
+  technique_id: z.string().min(1, 'テクニックIDは必須です'),
+  success_rate: z.number().min(0).max(100),
+  notes: z.string().optional(),
+  practice_date: z.string().min(1, '練習日は必須です'),
+});
+
+type PracticeFormData = z.infer<typeof practiceSchema>;
+
+// 練習記録の型定義
+export type NewTechniquePractice = {
+  technique_id: string;
+  success_rate: number;
+  practice_date: string;
+  notes?: string | null;
+};
 
 interface TechniquePracticeFormProps {
   techniqueId: string;
-  onSubmit: (data: NewTechniquePractice) => Promise<void>;
+  techniqueName?: string;
+  onSuccess?: () => void;
+  onSubmit?: (data: NewTechniquePractice) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function TechniquePracticeForm({
   techniqueId,
-  onSubmit,
+  techniqueName,
+  onSuccess,
+  onSubmit: propOnSubmit,
   onCancel
 }: TechniquePracticeFormProps) {
   const [sliderValue, setSliderValue] = useState(50);
@@ -49,6 +75,10 @@ export default function TechniquePracticeForm({
   const toast = useToast();
   const { supabase } = useAuth();
 
+  const roundToStep = (value: number, step: number) => {
+    return Math.round(value / step) * step;
+  };
+
   useEffect(() => {
     const loadTechnique = async () => {
       try {
@@ -57,7 +87,7 @@ export default function TechniquePracticeForm({
       } catch (error) {
         console.error('Error loading technique:', error);
         toast({
-          title: 'シークエンスの読み込みに失敗しました',
+          title: 'テクニックの読み込みに失敗しました',
           status: 'error',
           duration: 5000,
           isClosable: true,
@@ -71,11 +101,12 @@ export default function TechniquePracticeForm({
   }, [techniqueId, supabase, toast]);
 
   const {
-    register,
+    control,
     handleSubmit,
-    setValue,
+    reset,
     formState: { errors }
-  } = useForm<NewTechniquePractice>({
+  } = useForm<PracticeFormData>({
+    resolver: zodResolver(practiceSchema),
     defaultValues: {
       technique_id: techniqueId,
       success_rate: 50,
@@ -84,31 +115,43 @@ export default function TechniquePracticeForm({
     }
   });
 
-  // スライダーの値が変更されたときにフォームの値も更新
+  // スライダーの値が変更されたときの処理
   const handleSliderChange = (value: number) => {
-    setSliderValue(value);
-    setValue('success_rate', value);
+    const roundedValue = roundToStep(value, 5);
+    setSliderValue(roundedValue);
   };
 
-  // 連続成功回数の値が変更されたときにフォームの値も更新
+  // 連続成功回数の値が変更されたときの処理
   const handleStreakChange = (valueAsString: string, valueAsNumber: number) => {
     setStreakValue(valueAsNumber);
-    setValue('success_rate', valueAsNumber);
   };
 
-  const handleFormSubmit = async (data: NewTechniquePractice) => {
+  const onSubmit = async (data: PracticeFormData) => {
     try {
       setIsSubmitting(true);
-      await onSubmit({
-        ...data,
-        success_rate: technique?.unit === 'percent' ? sliderValue : streakValue
-      });
+      const practiceData: NewTechniquePractice = {
+        technique_id: techniqueId,
+        success_rate: technique?.unit === 'percent' ? sliderValue : streakValue,
+        notes: data.notes || null,
+        practice_date: data.practice_date
+      };
+
+      if (propOnSubmit) {
+        // 親コンポーネントから渡されたonSubmitを使用
+        await propOnSubmit(practiceData);
+      } else {
+        // デフォルトの処理を実行
+        await createTechniquePracticeService(practiceData, supabase);
+        if (onSuccess) onSuccess();
+      }
+
       toast({
         title: '練習記録を保存しました',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
+      reset();
     } catch (error) {
       console.error('Error submitting practice:', error);
       toast({
@@ -128,64 +171,92 @@ export default function TechniquePracticeForm({
   }
 
   return (
-    <Box as="form" onSubmit={handleSubmit(handleFormSubmit)} width="100%">
-      <VStack spacing={4} align="flex-start">
+    <Box as="form" onSubmit={handleSubmit(onSubmit)} width="100%">
+      <VStack spacing={4} align="stretch">
+        {techniqueName && (
+          <Text fontWeight="bold">{techniqueName}の練習記録</Text>
+        )}
+
         {technique?.unit === 'percent' ? (
           <FormControl isInvalid={!!errors.success_rate} isRequired>
-            <FormLabel htmlFor="success_rate">成功率</FormLabel>
-            <Box pt={6} pb={2}>
-              <Slider
-                id="success_rate"
-                min={0}
-                max={100}
-                step={1}
-                value={sliderValue}
-                onChange={handleSliderChange}
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-              >
-                <SliderMark value={0} mt={2} ml={-2} fontSize="sm">
-                  0%
-                </SliderMark>
-                <SliderMark value={50} mt={2} ml={-2} fontSize="sm">
-                  50%
-                </SliderMark>
-                <SliderMark value={100} mt={2} ml={-2} fontSize="sm">
-                  100%
-                </SliderMark>
-                <SliderTrack>
-                  <SliderFilledTrack />
-                </SliderTrack>
-                <Tooltip
-                  hasArrow
-                  bg="blue.500"
-                  color="white"
-                  placement="top"
-                  isOpen={showTooltip}
-                  label={`${sliderValue}%`}
-                >
-                  <SliderThumb />
-                </Tooltip>
-              </Slider>
-            </Box>
+            <FormLabel>成功率 (%)</FormLabel>
+            <Controller
+              name="success_rate"
+              control={control}
+              render={({ field }) => (
+                <Box pt={6} pb={2}>
+                  <Slider
+                    aria-label="success-rate-slider"
+                    value={sliderValue}
+                    onChange={(val) => {
+                      handleSliderChange(val);
+                      field.onChange(roundToStep(val, 5));
+                    }}
+                    min={0}
+                    max={100}
+                    step={5}
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                  >
+                    <SliderMark value={0} mt={2} ml={-2.5} fontSize="sm">
+                      0%
+                    </SliderMark>
+                    <SliderMark value={25} mt={2} ml={-2.5} fontSize="sm">
+                      25%
+                    </SliderMark>
+                    <SliderMark value={50} mt={2} ml={-2.5} fontSize="sm">
+                      50%
+                    </SliderMark>
+                    <SliderMark value={75} mt={2} ml={-2.5} fontSize="sm">
+                      75%
+                    </SliderMark>
+                    <SliderMark value={100} mt={2} ml={-2.5} fontSize="sm">
+                      100%
+                    </SliderMark>
+                    <Tooltip
+                      hasArrow
+                      bg="blue.500"
+                      color="white"
+                      placement="top"
+                      isOpen={showTooltip}
+                      label={`${sliderValue}%`}
+                    >
+                      <SliderThumb />
+                    </Tooltip>
+                    <SliderTrack>
+                      <SliderFilledTrack />
+                    </SliderTrack>
+                  </Slider>
+                </Box>
+              )}
+            />
             <FormErrorMessage>
               {errors.success_rate && errors.success_rate.message}
             </FormErrorMessage>
           </FormControl>
         ) : (
           <FormControl isInvalid={!!errors.success_rate} isRequired>
-            <FormLabel htmlFor="success_rate">連続成功回数</FormLabel>
-            <NumberInput 
-              min={0} 
-              value={streakValue} 
-              onChange={handleStreakChange}
-            >
-              <NumberInputField id="success_rate" />
-              <NumberInputStepper>
-                <NumberIncrementStepper />
-                <NumberDecrementStepper />
-              </NumberInputStepper>
-            </NumberInput>
+            <FormLabel>連続成功回数</FormLabel>
+            <Controller
+              name="success_rate"
+              control={control}
+              render={({ field }) => (
+                <NumberInput 
+                  min={0} 
+                  value={streakValue} 
+                  onChange={(valueAsString, valueAsNumber) => {
+                    handleStreakChange(valueAsString, valueAsNumber);
+                    field.onChange(valueAsNumber);
+                  }}
+                >
+                  <NumberInputField />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                  </NumberInputStepper>
+                </NumberInput>
+              )}
+            />
             <FormErrorMessage>
               {errors.success_rate && errors.success_rate.message}
             </FormErrorMessage>
@@ -193,13 +264,16 @@ export default function TechniquePracticeForm({
         )}
 
         <FormControl isInvalid={!!errors.practice_date} isRequired>
-          <FormLabel htmlFor="practice_date">練習日</FormLabel>
-          <Input
-            id="practice_date"
-            type="date"
-            {...register('practice_date', {
-              required: '練習日は必須です'
-            })}
+          <FormLabel>練習日</FormLabel>
+          <Controller
+            name="practice_date"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="date"
+                {...field}
+              />
+            )}
           />
           <FormErrorMessage>
             {errors.practice_date && errors.practice_date.message}
@@ -207,22 +281,29 @@ export default function TechniquePracticeForm({
         </FormControl>
 
         <FormControl isInvalid={!!errors.notes}>
-          <FormLabel htmlFor="notes">メモ</FormLabel>
-          <Textarea
-            id="notes"
-            placeholder="練習に関するメモを入力（任意）"
-            {...register('notes')}
+          <FormLabel>メモ</FormLabel>
+          <Controller
+            name="notes"
+            control={control}
+            render={({ field }) => (
+              <Textarea
+                {...field}
+                placeholder="練習の詳細や気づいたことをメモしましょう"
+                resize="vertical"
+              />
+            )}
           />
           <FormErrorMessage>
             {errors.notes && errors.notes.message}
           </FormErrorMessage>
         </FormControl>
 
-        <Box width="100%" display="flex" justifyContent="space-between" pt={4}>
+        <HStack justifyContent="flex-end" mt={4}>
           <Button
             variant="outline"
             onClick={onCancel}
             isDisabled={isSubmitting}
+            mr={3}
           >
             キャンセル
           </Button>
@@ -233,7 +314,7 @@ export default function TechniquePracticeForm({
           >
             保存
           </Button>
-        </Box>
+        </HStack>
       </VStack>
     </Box>
   );
