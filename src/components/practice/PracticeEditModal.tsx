@@ -16,9 +16,15 @@ import {
   SliderThumb,
   Box,
   Text,
-  HStack
+  HStack,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper
 } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 
 interface PracticeEditModalProps {
   isOpen: boolean;
@@ -27,9 +33,11 @@ interface PracticeEditModalProps {
     id: string;
     success_rate: number;
     notes: string | null;
+    practice_date?: string;
   } | null;
   onSave: (id: string, updates: { success_rate: number; notes: string | null }) => Promise<void>;
   isLoading: boolean;
+  unit?: string; // 単位（percent または streak）
 }
 
 export default function PracticeEditModal({
@@ -37,10 +45,16 @@ export default function PracticeEditModal({
   onClose,
   practice,
   onSave,
-  isLoading
+  isLoading,
+  unit = 'percent' // デフォルトはpercent
 }: PracticeEditModalProps) {
   const [successRate, setSuccessRate] = useState(practice?.success_rate || 0);
   const [notes, setNotes] = useState(practice?.notes || '');
+  
+  // 日付のフォーマット
+  const formattedDate = practice?.practice_date 
+    ? format(new Date(practice.practice_date), 'yyyy-MM-dd HH:mm')
+    : '';
 
   // モーダルが開かれるたびに初期値を設定
   useEffect(() => {
@@ -65,25 +79,45 @@ export default function PracticeEditModal({
         <ModalHeader>練習記録の編集</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
+          {practice?.practice_date && (
+            <Box mb={4}>
+              <Text fontWeight="bold">練習日時:</Text>
+              <Text>{formattedDate}</Text>
+            </Box>
+          )}
           <FormControl mb={4}>
-            <FormLabel>成功率</FormLabel>
-            <HStack spacing={4}>
-              <Box flex="1">
-                <Slider
-                  value={successRate}
-                  onChange={setSuccessRate}
-                  min={0}
-                  max={100}
-                  step={5}
-                >
-                  <SliderTrack>
-                    <SliderFilledTrack />
-                  </SliderTrack>
-                  <SliderThumb />
-                </Slider>
-              </Box>
-              <Text width="40px" textAlign="right">{successRate}%</Text>
-            </HStack>
+            <FormLabel>{unit === 'percent' ? '成功率' : '連続成功回数'}</FormLabel>
+            {unit === 'percent' ? (
+              <HStack spacing={4}>
+                <Box flex="1">
+                  <Slider
+                    value={successRate}
+                    onChange={setSuccessRate}
+                    min={0}
+                    max={100}
+                    step={5}
+                  >
+                    <SliderTrack>
+                      <SliderFilledTrack />
+                    </SliderTrack>
+                    <SliderThumb />
+                  </Slider>
+                </Box>
+                <Text width="40px" textAlign="right">{successRate}%</Text>
+              </HStack>
+            ) : (
+              <NumberInput 
+                min={0} 
+                value={successRate} 
+                onChange={(_, valueAsNumber) => setSuccessRate(valueAsNumber)}
+              >
+                <NumberInputField />
+                <NumberInputStepper>
+                  <NumberIncrementStepper />
+                  <NumberDecrementStepper />
+                </NumberInputStepper>
+              </NumberInput>
+            )}
           </FormControl>
           <FormControl>
             <FormLabel>コメント</FormLabel>

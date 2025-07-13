@@ -11,10 +11,16 @@ import {
   Input, 
   Textarea, 
   VStack,
-  useToast
+  useToast,
+  RadioGroup,
+  Radio,
+  Stack,
+  Text,
+  Tooltip
 } from '@chakra-ui/react';
 import { NewTechnique, Technique } from '@/types/models/technique';
 import { useAuth } from '@/contexts/AuthContext';
+import { InfoIcon } from '@chakra-ui/icons';
 
 interface TechniqueFormProps {
   performanceId: string;
@@ -30,24 +36,36 @@ export default function TechniqueForm({
   onCancel 
 }: TechniqueFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [unitValue, setUnitValue] = useState(initialData?.unit || 'percent');
   const toast = useToast();
   
   const { 
     register, 
     handleSubmit, 
+    setValue,
     formState: { errors } 
   } = useForm<NewTechnique>({
     defaultValues: initialData || {
       performance_id: performanceId,
       name: '',
-      notes: ''
+      notes: '',
+      unit: 'percent'
     }
   });
+
+  // ユニット選択時にフォームの値を更新
+  const handleUnitChange = (value: string) => {
+    setUnitValue(value);
+    setValue('unit', value);
+  };
 
   const handleFormSubmit = async (data: NewTechnique) => {
     try {
       setIsSubmitting(true);
-      await onSubmit(data);
+      await onSubmit({
+        ...data,
+        unit: unitValue
+      });
       toast({
         title: initialData ? 'シークエンスを更新しました' : 'シークエンスを作成しました',
         status: 'success',
@@ -87,6 +105,30 @@ export default function TechniqueForm({
           <FormErrorMessage>
             {errors.name && errors.name.message}
           </FormErrorMessage>
+        </FormControl>
+
+        <FormControl isRequired isDisabled={!!initialData}>
+          <FormLabel display="flex" alignItems="center">
+            記録単位
+            <Tooltip label="作成後は変更できません" placement="top">
+              <InfoIcon ml={2} color="gray.500" />
+            </Tooltip>
+          </FormLabel>
+          <RadioGroup 
+            onChange={handleUnitChange} 
+            value={unitValue}
+            isDisabled={!!initialData}
+          >
+            <Stack direction="row">
+              <Radio value="percent">成功率</Radio>
+              <Radio value="streak">連続成功回数</Radio>
+            </Stack>
+          </RadioGroup>
+          <Text fontSize="sm" color="gray.500" mt={1}>
+            {unitValue === 'percent' 
+              ? '0〜100%のスライダーで成功率を記録します' 
+              : '連続して成功した回数を数値で記録します'}
+          </Text>
         </FormControl>
 
         <FormControl isInvalid={!!errors.notes}>

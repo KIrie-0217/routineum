@@ -45,7 +45,7 @@ import { Performance } from '@/types/models/performance';
 import { formatDate } from '@/utils/dateUtils';
 import TechniqueList from '@/components/technique/TechniqueList';
 import PerformancePracticeForm from '@/components/practice/PerformancePracticeForm';
-import TechniquePracticeForm from '@/components/practice/TechniquePracticeForm';
+import TechniquePracticeForm from '@/components/technique/TechniquePracticeForm';
 import PracticeHistoryList from '@/components/practice/PracticeHistoryList';
 import PracticeContributionGraph from '@/components/practice/PracticeContributionGraph';
 import { PerformanceProgressChart, TechniqueProgressChart, WeeklyAverageGauge, TechniquesComparisonChart } from '@/components/charts';
@@ -550,6 +550,7 @@ export default function PerformanceDetailPage() {
                         title="直近1週間のルーチン平均成功率"
                         colorScheme="blue"
                         fetchPractices={() => getAllPerformancePractices(params.id,supabase)}
+                        unit="percent"
                       /> 
                     </Box>
                   </GridItem>
@@ -641,7 +642,8 @@ export default function PerformanceDetailPage() {
                         <TechniquePracticeForm 
                           techniqueId={selectedTechnique.id} 
                           techniqueName={selectedTechnique.name}
-                          onSuccess={handleTechniquePracticeSuccess} 
+                          onSuccess={handleTechniquePracticeSuccess}
+                          onCancel={() => setActiveTabIndex(1)} // Switch to graph tab on cancel
                         />
                       )}
                     </Box>
@@ -662,6 +664,7 @@ export default function PerformanceDetailPage() {
                               title={`${selectedTechnique.name}の週間平均`}
                               colorScheme="green"
                               fetchPractices={() => getAllTechniquePractices(selectedTechnique.id,supabase)}
+                              unit={selectedTechnique.unit || 'percent'}
                             />
                           </Box>
                         </VStack>
@@ -679,6 +682,7 @@ export default function PerformanceDetailPage() {
                       currentPage={techniquePracticePage}
                       totalPages={techniquePracticesTotalPages}
                       onPageChange={handleTechniquePracticePageChange}
+                      unit={selectedTechnique?.unit || 'percent'}
                     />
                   </TabPanel>
                 </TabPanels>

@@ -19,6 +19,8 @@ import { format, parseISO, subDays, subMonths, isAfter } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { getAllTechniquePractices } from '@/services/practiceService';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { getTechniqueById } from '@/services/techniqueService';
+import { Technique } from '@/types/models/technique';
 
 // Chart.jsの必要なコンポーネントを登録
 ChartJS.register(
@@ -50,6 +52,7 @@ export default function TechniqueProgressChart({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<string>('all'); // 'all', 'month', 'week'
+  const [technique, setTechnique] = useState<Technique | null>(null);
   const supabase = getSupabaseClient();
 
   // カラーテーマ
@@ -59,6 +62,7 @@ export default function TechniqueProgressChart({
 
   
   const getLatestValue = () => {
+    if (!chartData.datasets || chartData.datasets.length === 0) return 0;
     const data = chartData.datasets[0].data[0];
     if (typeof data === 'number') return data;
     if (data && 'y' in data) return data.y;
@@ -66,65 +70,76 @@ export default function TechniqueProgressChart({
   };
 
   // グラフのオプション
-  const options: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 100,
-        title: {
-          display: true,
-          text: '成功率 (%)',
-          color: textColor
+  const getChartOptions = (): ChartOptions<'line'> => {
+    const isPercent = technique?.unit === 'percent';
+    
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: isPercent ? 100 : undefined,
+          title: {
+            display: true,
+            text: isPercent ? '成功率 (%)' : '連続成功回数',
+            color: textColor
+          },
+          grid: {
+            color: gridColor
+          },
+          ticks: {
+            color: textColor
+          }
         },
-        grid: {
-          color: gridColor
-        },
-        ticks: {
-          color: textColor
+        x: {
+          title: {
+            display: true,
+            text: '練習日',
+            color: textColor
+          },
+          grid: {
+            color: gridColor
+          },
+          ticks: {
+            color: textColor,
+            maxRotation: 45,
+            minRotation: 45
+          }
         }
       },
-      x: {
-        title: {
-          display: true,
-          text: '練習日',
-          color: textColor
+      plugins: {
+        legend: {
+          position: 'top' as const,
+          labels: {
+            color: textColor
+          }
         },
-        grid: {
-          color: gridColor
-        },
-        ticks: {
-          color: textColor,
-          maxRotation: 45,
-          minRotation: 45
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        position: 'top' as const,
-        labels: {
-          color: textColor
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return `成功率: ${context.parsed.y}%`;
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return isPercent 
+                ? `成功率: ${context.parsed.y}%` 
+                : `連続成功回数: ${context.parsed.y}回`;
+            }
           }
         }
       }
-    }
+    };
   };
 
   useEffect(() => {
-    async function fetchPracticeData() {
+    async function fetchData() {
       try {
         setIsLoading(true);
         setError(null);
         
-        const practices = await getAllTechniquePractices(techniqueId,supabase);
+        const [practices, techniqueData] = await Promise.all([
+          getAllTechniquePractices(techniqueId, supabase),
+          getTechniqueById(techniqueId, supabase)
+        ]);
+        
+        setTechnique(techniqueData);
         
         if (practices.length === 0) {
           setIsLoading(false);
@@ -139,14 +154,14 @@ export default function TechniqueProgressChart({
         setAllPractices(sortedPractices);
         updateChartData(sortedPractices);
       } catch (err) {
-        console.error('練習データの取得に失敗しました:', err);
+        console.error('データの取得に失敗しました:', err);
         setError('データの読み込みに失敗しました');
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchPracticeData();
+    fetchData();
   }, [techniqueId]);
 
   // 時間範囲が変更されたときにチャートデータを更新
@@ -196,13 +211,15 @@ export default function TechniqueProgressChart({
     // 移動平均を計算（3点移動平均）
     const movingAverages = calculateMovingAverage(successRates, 3);
 
-    
+    const isPercent = technique?.unit === 'percent';
+    const datasetLabel = isPercent ? '成功率 (%)' : '連続成功回数';
+    const movingAverageLabel = isPercent ? '移動平均 (3回)' : '移動平均 (3回)';
 
     setChartData({
       labels,
       datasets: [
         {
-          label: '成功率 (%)',
+          label: datasetLabel,
           data: successRates,
           borderColor: lineColor,
           backgroundColor: lineColor,
@@ -211,7 +228,7 @@ export default function TechniqueProgressChart({
           pointHoverRadius: 6
         },
         {
-          label: '移動平均 (3回)',
+          label: movingAverageLabel,
           data: movingAverages,
           borderColor: 'rgba(255, 99, 132, 0.8)',
           backgroundColor: 'rgba(255, 99, 132, 0.8)',
@@ -248,14 +265,26 @@ export default function TechniqueProgressChart({
     }
     
     return result;
-  }
+  };
 
   const handleTimeRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setTimeRange(e.target.value);
   };
 
   // タイトルがない場合はシークエンス名を使用
-  const chartTitle = title || (techniqueName ? `${techniqueName}の成功率推移` : 'シークエンスの成功率推移');
+  const getChartTitle = () => {
+    if (title) return title;
+    
+    if (techniqueName) {
+      return technique?.unit === 'percent'
+        ? `${techniqueName}の成功率推移`
+        : `${techniqueName}の連続成功回数推移`;
+    }
+    
+    return technique?.unit === 'percent'
+      ? 'シークエンスの成功率推移'
+      : 'シークエンスの連続成功回数推移';
+  };
 
   if (isLoading) {
     return (
@@ -282,10 +311,14 @@ export default function TechniqueProgressChart({
   }
 
   if (chartData.labels?.length === 1) {
+    const valueLabel = technique?.unit === 'percent' 
+      ? `最新の成功率: ${getLatestValue()}%` 
+      : `最新の連続成功回数: ${getLatestValue()}回`;
+      
     return (
       <Box h="300px" display="flex" alignItems="center" justifyContent="center" flexDirection="column">
         <Text color="gray.500" mb={2}>グラフを表示するには2つ以上の記録が必要です</Text>
-        <Text fontWeight="bold">最新の成功率: {getLatestValue()}%</Text>
+        <Text fontWeight="bold">{valueLabel}</Text>
       </Box>
     );
   }
@@ -293,7 +326,7 @@ export default function TechniqueProgressChart({
   return (
     <Box>
       <HStack justifyContent="space-between" mb={4}>
-        <Heading size="md">{chartTitle}</Heading>
+        <Heading size="md">{getChartTitle()}</Heading>
         <Select 
           value={timeRange} 
           onChange={handleTimeRangeChange} 
@@ -306,7 +339,7 @@ export default function TechniqueProgressChart({
         </Select>
       </HStack>
       <Box h="300px" position="relative">
-        <Line options={options} data={chartData} />
+        <Line options={getChartOptions()} data={chartData} />
       </Box>
     </Box>
   );

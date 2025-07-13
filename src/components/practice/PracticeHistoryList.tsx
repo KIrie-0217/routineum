@@ -31,6 +31,7 @@ interface Practice {
   success_rate: number;
   practice_date: string;
   notes: string | null;
+  unit?: string; // 単位（percent または streak）
 }
 
 interface PracticeHistoryListProps {
@@ -42,6 +43,7 @@ interface PracticeHistoryListProps {
   totalPages?: number;
   currentPage?: number;
   onPageChange?: (page: number) => void;
+  unit?: string; // 単位（percent または streak）
 }
 
 export default function PracticeHistoryList({ 
@@ -52,7 +54,8 @@ export default function PracticeHistoryList({
   onEdit,
   totalPages = 1,
   currentPage = 1,
-  onPageChange
+  onPageChange,
+  unit = 'percent' // デフォルトはpercent
 }: PracticeHistoryListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingPractice, setEditingPractice] = useState<Practice | null>(null);
@@ -166,8 +169,8 @@ export default function PracticeHistoryList({
         {practices.map((practice) => (
           <Box key={practice.id} p={4} borderWidth="1px" borderRadius="md">
             <HStack justify="space-between" mb={2}>
-              <Badge colorScheme={getColorScheme(practice.success_rate)}>
-                成功率: {practice.success_rate}%
+              <Badge colorScheme={getColorScheme(practice.success_rate, unit)}>
+                {unit === 'percent' ? `成功率: ${practice.success_rate}%` : `連続成功: ${practice.success_rate}回`}
               </Badge>
               <HStack>
                 <Text fontSize="sm" color="gray.500">
@@ -198,8 +201,8 @@ export default function PracticeHistoryList({
               </HStack>
             </HStack>
             <Progress
-              value={practice.success_rate}
-              colorScheme={getColorScheme(practice.success_rate)}
+              value={unit === 'percent' ? practice.success_rate : Math.min(practice.success_rate, 100)}
+              colorScheme={getColorScheme(practice.success_rate, unit)}
               size="sm"
               mb={2}
             />
@@ -257,16 +260,27 @@ export default function PracticeHistoryList({
         practice={editingPractice}
         onSave={handleSaveEdit}
         isLoading={isEditLoading}
+        unit={unit}
       />
     </Box>
   );
 }
 
 // 成功率に応じた色を返す関数
-function getColorScheme(rate: number): string {
-  if (rate >= 80) return 'green';
-  if (rate >= 60) return 'blue';
-  if (rate >= 40) return 'yellow';
-  if (rate >= 20) return 'orange';
-  return 'red';
+function getColorScheme(rate: number, unit: string = 'percent'): string {
+  if (unit === 'percent') {
+    // パーセント表示の場合
+    if (rate >= 80) return 'green';
+    if (rate >= 60) return 'blue';
+    if (rate >= 40) return 'yellow';
+    if (rate >= 20) return 'orange';
+    return 'red';
+  } else {
+    // 連続成功回数の場合
+    if (rate >= 10) return 'green';
+    if (rate >= 7) return 'blue';
+    if (rate >= 5) return 'yellow';
+    if (rate >= 3) return 'orange';
+    return 'red';
+  }
 }

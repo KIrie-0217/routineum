@@ -321,7 +321,7 @@ export default function DashboardPage() {
         <Divider my={6} />
           
         {/* ダッシュボードサマリーチャートを追加 */}
-        {user && !statsLoading && (performanceCount > 0 || techniqueCount > 0 || practiceCount > 0) && (
+        {user && !statsLoading && (
           <Box mb={8}>
             <Heading size="md" mb={4}>ルーチンデータ分析</Heading>
             <VStack spacing={6} mb={6} align="center">

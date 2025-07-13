@@ -14,16 +14,21 @@ import {
   FormErrorMessage,
   useToast,
   HStack,
+  Input,
 } from '@chakra-ui/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { createPerformancePractice } from '@/services/practiceService';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { dateToLocalISOString, localDateStringToUTCISOString } from '@/utils/dateUtils';
 
 // バリデーションスキーマ
 const practiceSchema = z.object({
   success_rate: z.number().min(0).max(100),
+  practice_date: z.string().min(1, '練習日は必須です'),
   notes: z.string().optional(),
 });
 
@@ -53,6 +58,7 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
     resolver: zodResolver(practiceSchema),
     defaultValues: {
       success_rate: 50,
+      practice_date: dateToLocalISOString(new Date()), // ローカルタイムゾーンでのISO文字列
       notes: '',
     },
   });
@@ -63,6 +69,7 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
       await createPerformancePractice({
         performance_id: performanceId,
         success_rate: data.success_rate,
+        practice_date: localDateStringToUTCISOString(data.practice_date), // ローカル時間をUTCに変換
         notes: data.notes || null,
       },supabase);
       
@@ -84,6 +91,33 @@ export default function PerformancePracticeForm({ performanceId, onSuccess, onCa
   return (
     <Box as="form" onSubmit={handleSubmit(onSubmit)} width="100%">
       <VStack spacing={4} align="stretch">
+        <FormControl isInvalid={!!errors.practice_date} isRequired>
+          <FormLabel>練習日時</FormLabel>
+          <Controller
+            name="practice_date"
+            control={control}
+            render={({ field }) => (
+              <Box className="date-picker-container" width="100%">
+                <DatePicker
+                  selected={field.value ? new Date(field.value) : null}
+                  onChange={(date: Date | null) => {
+                    field.onChange(date ? dateToLocalISOString(date) : '');
+                  }}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="yyyy/MM/dd HH:mm"
+                  customInput={<Input />}
+                  className="chakra-input"
+                />
+              </Box>
+            )}
+          />
+          {errors.practice_date && (
+            <FormErrorMessage>{errors.practice_date.message}</FormErrorMessage>
+          )}
+        </FormControl>
+
         <FormControl isInvalid={!!errors.success_rate}>
           <FormLabel>成功率 (%)</FormLabel>
           <Controller
