@@ -58,6 +58,28 @@ a {
   width: 100%;
 }
 
+/* モバイル表示用のカスタムクラス */
+.mobile-date-picker .react-datepicker-popper {
+  width: 280px !important;
+}
+
+.mobile-date-picker .react-datepicker__month-container,
+.mobile-date-picker .react-datepicker__time-container {
+  width: 100% !important;
+  max-width: 280px !important;
+}
+
+.mobile-date-picker .react-datepicker__time-container {
+  border-left: none !important;
+  border-top: 1px solid #aeaeae !important;
+  margin-top: 5px !important;
+}
+
+.mobile-date-picker .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+  width: 100% !important;
+  max-width: 280px !important;
+}
+
 /* モバイル向け DatePicker スタイル修正 */
 @media (max-width: 768px) {
   .react-datepicker {
@@ -94,10 +116,13 @@ a {
     top: 6px;
   }
   
-  /* タイムピッカーのモバイル対応 */
+  /* タイムピッカーのモバイル対応 - 横並びレイアウト */
   .react-datepicker__time-container {
     width: 100%;
     max-width: 280px;
+    border-left: none;
+    border-top: 1px solid #aeaeae;
+    margin-top: 5px;
   }
   
   .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
@@ -113,7 +138,7 @@ a {
   
   /* スクロールバーのスタイル調整 */
   .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list {
-    height: 180px;
+    height: 150px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -121,6 +146,12 @@ a {
   .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
     padding: 5px 10px;
     height: auto;
+    font-size: 0.8rem;
+  }
+  
+  /* 日付と時間を一段で表示するための調整 */
+  .react-datepicker--time-only .react-datepicker__time-container {
+    border-top: none;
   }
 }
 

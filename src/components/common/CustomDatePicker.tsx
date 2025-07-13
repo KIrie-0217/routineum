@@ -1,9 +1,9 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Box, Input } from '@chakra-ui/react';
+import { Box, Input, useBreakpointValue } from '@chakra-ui/react';
 
 interface CustomDatePickerProps {
   selected: Date | null;
@@ -44,8 +44,30 @@ export default function CustomDatePicker({
   isClearable = false,
   disabled = false,
 }: CustomDatePickerProps) {
+  // モバイル表示かどうかを判定
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  // モバイル表示時のカスタムクラス
+  const [customClass, setCustomClass] = useState<string>('');
+
+  useEffect(() => {
+    // モバイル表示時にカスタムクラスを設定
+    setCustomClass(isMobile ? 'mobile-date-picker' : '');
+  }, [isMobile]);
+
   return (
-    <Box className="date-picker-container" width="100%">
+    <Box className={`date-picker-container ${customClass}`} width="100%">
+      <style jsx global>{`
+        /* モバイル表示時のインラインスタイル */
+        .mobile-date-picker .react-datepicker__time-container {
+          width: 100%;
+          border-left: none;
+          border-top: 1px solid #aeaeae;
+        }
+        
+        .mobile-date-picker .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+          width: 100%;
+        }
+      `}</style>
       <DatePicker
         selected={selected}
         onChange={onChange}
@@ -58,6 +80,10 @@ export default function CustomDatePicker({
         placeholderText={placeholderText}
         isClearable={isClearable}
         disabled={disabled}
+        popperPlacement="bottom-start"
+        popperProps={{
+          strategy: "fixed"
+        }}
       />
     </Box>
   );
