@@ -13,7 +13,7 @@ import {
   ChartOptions
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { Box, Heading, Text, Spinner, Center, useColorModeValue, Select, Switch, FormControl, FormLabel, HStack } from '@chakra-ui/react';
+import { Box, Heading, Text, Spinner, Center, useColorModeValue, Select, Switch, FormControl, FormLabel, HStack, VStack, Checkbox, CheckboxGroup, Button, Collapse, useDisclosure } from '@chakra-ui/react';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -64,6 +64,8 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<string>('all'); // 'all', 'month', 'week'
   const [useAverages, setUseAverages] = useState<boolean>(true); // 日毎の平均値を使用するかどうか 
+  const [selectedTechniqueIds, setSelectedTechniqueIds] = useState<string[]>([]); // 選択されたシークエンスのID
+  const { isOpen: isSelectionOpen, onToggle: onSelectionToggle } = useDisclosure({ defaultIsOpen: false }); // シークエンス選択パネルの開閉状態
   const supabase = getSupabaseClient();
 
   const textColor = useColorModeValue('rgba(0, 0, 0, 0.8)', 'rgba(255, 255, 255, 0.8)');
@@ -109,6 +111,8 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
         );
 
         setTechniquesWithPractices(techniquesWithPracticesData);
+        // 初期状態では全てのシークエンスを選択状態にする
+        setSelectedTechniqueIds(techniquesWithPracticesData.map(t => t.id));
       } catch (err) {
         console.error('シークエンスの練習データの取得に失敗しました:', err);
         setError('データの読み込みに失敗しました');
@@ -122,10 +126,16 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
     }
   }, [performanceId]);
 
-  // 時間範囲に基づいてデータをフィルタリング
+  // 時間範囲と選択されたシークエンスに基づいてデータをフィルタリング
   const getFilteredData = () => {
+    // まず選択されたシークエンスでフィルタリング
+    let filteredTechniques = techniquesWithPractices.filter(technique => 
+      selectedTechniqueIds.length === 0 || selectedTechniqueIds.includes(technique.id)
+    );
+
+    // 時間範囲でフィルタリング
     if (timeRange === 'all') {
-      return techniquesWithPractices;
+      return filteredTechniques;
     }
 
     const now = new Date();
@@ -137,7 +147,7 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
       cutoffDate.setDate(now.getDate() - 7);
     }
 
-    return techniquesWithPractices.map(technique => ({
+    return filteredTechniques.map(technique => ({
       ...technique,
       practices: technique.practices.filter(practice => 
         new Date(practice.practice_date) >= cutoffDate
@@ -210,15 +220,23 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
       
       // 各シークエンスのデータセットを作成
       const datasets = filteredData.map((technique, index) => {
-        // 色の配列
+        // 視認性を考慮した15色のカラーパレット
         const colors = [
-          'rgba(66, 153, 225, 1)',  // blue
-          'rgba(72, 187, 120, 1)',  // green
-          'rgba(237, 137, 54, 1)',  // orange
-          'rgba(159, 122, 234, 1)', // purple
-          'rgba(237, 100, 166, 1)', // pink
-          'rgba(49, 151, 149, 1)',  // teal
-          'rgba(113, 128, 150, 1)'  // gray
+          'rgba(239, 68, 68, 1)',   // red - 鮮やかな赤
+          'rgba(249, 115, 22, 1)',  // orange - 暖かいオレンジ
+          'rgba(245, 158, 11, 1)',  // amber - 明るい黄色
+          'rgba(132, 204, 22, 1)',  // lime - 黄緑
+          'rgba(34, 197, 94, 1)',   // green - 鮮やかな緑
+          'rgba(16, 185, 129, 1)',  // emerald - エメラルド
+          'rgba(20, 184, 166, 1)',  // teal - ティール
+          'rgba(6, 182, 212, 1)',   // cyan - シアン
+          'rgba(59, 130, 246, 1)',  // blue - 鮮やかな青
+          'rgba(99, 102, 241, 1)',  // indigo - インディゴ
+          'rgba(147, 51, 234, 1)',  // violet - 紫
+          'rgba(217, 70, 239, 1)',  // fuchsia - マゼンタ
+          'rgba(236, 72, 153, 1)',  // pink - ピンク
+          'rgba(244, 63, 94, 1)',   // rose - ローズ
+          'rgba(107, 114, 128, 1)'  // gray - グレー（フォールバック用）
         ];
         
         // 日付ごとの平均成功率データを作成
@@ -251,15 +269,23 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
       
       // 各シークエンスのデータセットを作成
       const datasets = filteredData.map((technique, index) => {
-        // 色の配列
+        // 視認性を考慮した15色のカラーパレット
         const colors = [
-          'rgba(66, 153, 225, 1)',  // blue
-          'rgba(72, 187, 120, 1)',  // green
-          'rgba(237, 137, 54, 1)',  // orange
-          'rgba(159, 122, 234, 1)', // purple
-          'rgba(237, 100, 166, 1)', // pink
-          'rgba(49, 151, 149, 1)',  // teal
-          'rgba(113, 128, 150, 1)'  // gray
+          'rgba(239, 68, 68, 1)',   // red - 鮮やかな赤
+          'rgba(249, 115, 22, 1)',  // orange - 暖かいオレンジ
+          'rgba(245, 158, 11, 1)',  // amber - 明るい黄色
+          'rgba(132, 204, 22, 1)',  // lime - 黄緑
+          'rgba(34, 197, 94, 1)',   // green - 鮮やかな緑
+          'rgba(16, 185, 129, 1)',  // emerald - エメラルド
+          'rgba(20, 184, 166, 1)',  // teal - ティール
+          'rgba(6, 182, 212, 1)',   // cyan - シアン
+          'rgba(59, 130, 246, 1)',  // blue - 鮮やかな青
+          'rgba(99, 102, 241, 1)',  // indigo - インディゴ
+          'rgba(147, 51, 234, 1)',  // violet - 紫
+          'rgba(217, 70, 239, 1)',  // fuchsia - マゼンタ
+          'rgba(236, 72, 153, 1)',  // pink - ピンク
+          'rgba(244, 63, 94, 1)',   // rose - ローズ
+          'rgba(107, 114, 128, 1)'  // gray - グレー（フォールバック用）
         ];
         
         // 日付ごとの成功率データを作成
@@ -384,6 +410,22 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
     setUseAverages(!useAverages);
   };
 
+  // シークエンス選択のハンドラー関数
+  const handleTechniqueSelection = (selectedIds: string[]) => {
+    setSelectedTechniqueIds(selectedIds);
+  };
+
+  // 全選択/全解除のハンドラー関数
+  const handleSelectAll = () => {
+    if (selectedTechniqueIds.length === techniquesWithPractices.length) {
+      // 全て選択されている場合は全解除
+      setSelectedTechniqueIds([]);
+    } else {
+      // 一部または全て未選択の場合は全選択
+      setSelectedTechniqueIds(techniquesWithPractices.map(t => t.id));
+    }
+  };
+
   if (isLoading) {
     return (
       <Box h={{ base: "200px", md: "300px" }} display="flex" alignItems="center" justifyContent="center">
@@ -423,6 +465,14 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
       <Box display="flex" flexDirection={{ base: "column", md: "row" }} justifyContent="space-between" alignItems={{ base: "start", md: "center" }} mb={4} gap={2}>
         <Heading size="md" mb={{ base: 2, md: 0 }}>シークエンスの成功率推移</Heading>
         <HStack spacing={{ base: 2, md: 4 }} flexWrap="wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onSelectionToggle}
+            colorScheme="blue"
+          >
+            シークエンス選択 ({selectedTechniqueIds.length}/{techniquesWithPractices.length})
+          </Button>
           <FormControl display="flex" alignItems="center" width="auto" minW="120px">
             <FormLabel htmlFor="average-toggle" mb="0" fontSize="sm" mr={2}>
               日毎の平均
@@ -446,6 +496,64 @@ export default function TechniquesComparisonChart({ performanceId }: TechniquesC
           </Select>
         </HStack>
       </Box>
+
+      {/* シークエンス選択パネル */}
+      {isSelectionOpen && (
+        <Box 
+          mb={4} 
+          p={4} 
+          border="1px" 
+          borderColor={useColorModeValue('gray.200', 'gray.600')} 
+          borderRadius="md"
+          bg={useColorModeValue('gray.50', 'gray.700')}
+        >
+          <VStack align="stretch" spacing={3}>
+            <HStack justify="space-between" align="center">
+              <Text fontSize="sm" fontWeight="medium">
+                表示するシークエンスを選択してください
+              </Text>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={handleSelectAll}
+                colorScheme="blue"
+              >
+                {selectedTechniqueIds.length === techniquesWithPractices.length ? '全解除' : '全選択'}
+              </Button>
+            </HStack>
+            
+            <CheckboxGroup 
+              value={selectedTechniqueIds} 
+              onChange={handleTechniqueSelection}
+            >
+              <Box 
+                display="grid" 
+                gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }} 
+                gap={2}
+              >
+                {techniquesWithPractices.map((technique) => (
+                  <Checkbox 
+                    key={technique.id} 
+                    value={technique.id}
+                    size="sm"
+                    colorScheme="blue"
+                  >
+                    <Text fontSize="sm" noOfLines={1} title={technique.name}>
+                      {technique.name}
+                    </Text>
+                  </Checkbox>
+                ))}
+              </Box>
+            </CheckboxGroup>
+            
+            {selectedTechniqueIds.length === 0 && (
+              <Text fontSize="xs" color="orange.500" textAlign="center">
+                ※ シークエンスが選択されていない場合、全てのシークエンスが表示されます
+              </Text>
+            )}
+          </VStack>
+        </Box>
+      )}
       <Box h="300px" position="relative">
         <Line data={chartData} options={options} />
       </Box>
